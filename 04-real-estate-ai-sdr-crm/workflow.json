@@ -1,0 +1,238 @@
+{
+  "name": "Kalimera Greek Real Estate AI SDR & CRM Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "cron-daily-discovery",
+      "name": "Daily Regional Scan (10:00 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { region: 'Chalkidiki (Kassandra)', query: 'luxury villa kassandra chalkidiki direct booking website -booking.com -airbnb.com' } },\n  { json: { region: 'Thassos', query: 'boutique suites thassos golden beach direct booking' } },\n  { json: { region: 'Lefkada', query: 'cliff villa lefkada ionian private pool direct owner' } },\n  { json: { region: 'Athens Riviera', query: 'luxury seaview loft glyfada vouliagmeni direct rental' } }\n];"
+      },
+      "id": "code-seed-regions",
+      "name": "Target Greek Regions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_PERPLEXITY_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [ { role: 'system', content: 'You are an elite real estate research bot. Find 3 active independent luxury vacation rental websites in ' + $json.region + '. Return only a JSON array of objects with property_name, owner_name (if visible), website_url, phone, and email.' }, { role: 'user', content: $json.query } ] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-search-villas",
+      "name": "Perplexity Villa Discovery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "prompt": "== SYSTEM ROLE: Senior Hospitality Consultant & AI SDR for Kalimera (lexmation.com)\n\nAnalyze the discovered Greek property:\nName: {{ $json.property_name }}\nRegion: {{ $('Target Greek Regions').item.json.region }}\nURL: {{ $json.website_url }}\n\nTASKS:\n1. Audit the property for 3 high-impact gaps:\n   - Calendar Sync: Risk of double bookings between Airbnb, Booking.com & direct.\n   - Video Marketing: Lack of vertical Reels/TikTok promo video tours.\n   - Direct Booking Friction: Relying on slow email forms rather than instant WhatsApp AI confirmation.\n2. Assign Lead Grade: A+ (High Ticket Villa €40k+), A, or B.\n3. Write a hyper-personalized Cold Email Draft.\n4. Write a native Greek WhatsApp Opening Message for the owner.\n\nRETURN STRICT JSON ONLY:\n{\n  \"property_name\": \"...\",\n  \"owner_name\": \"...\",\n  \"region\": \"...\",\n  \"phone\": \"...\",\n  \"email\": \"...\",\n  \"website\": \"...\",\n  \"status\": \"ai_audited\",\n  \"grade\": \"A+\" | \"A\" | \"B\",\n  \"estimated_revenue\": \"€.../season\",\n  \"audit_findings\": {\n    \"calendar_sync\": \"...\",\n    \"video_marketing\": \"...\",\n    \"direct_booking\": \"...\"\n  },\n  \"ai_draft\": {\n    \"subject\": \"...\",\n    \"body\": \"...\",\n    \"whatsapp_msg\": \"...\"\n  },\n  \"notes\": \"...\"\n}"
+      },
+      "id": "llm-ai-sdr-audit",
+      "name": "AI SDR Audit & Copywriter",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.4,
+      "position": [
+        840,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://kalimera.lexmation.com/crm/api.php?action=add_lead",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "property_name",
+              "value": "={{ $json.property_name }}"
+            },
+            {
+              "name": "owner_name",
+              "value": "={{ $json.owner_name }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "region",
+              "value": "={{ $json.region }}"
+            },
+            {
+              "name": "website",
+              "value": "={{ $json.website }}"
+            },
+            {
+              "name": "status",
+              "value": "ai_audited"
+            },
+            {
+              "name": "grade",
+              "value": "={{ $json.grade }}"
+            },
+            {
+              "name": "estimated_revenue",
+              "value": "={{ $json.estimated_revenue }}"
+            },
+            {
+              "name": "audit_findings",
+              "value": "={{ $json.audit_findings }}"
+            },
+            {
+              "name": "ai_draft",
+              "value": "={{ $json.ai_draft }}"
+            },
+            {
+              "name": "notes",
+              "value": "={{ $json.notes }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-post-to-crm",
+      "name": "Sync to Kalimera CRM API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1060,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=🌊 *KALIMERA AI CRM: NEW LEAD ENRICHED*\n━━━━━━━━━━━━━━━━━━━━\n🏡 *Property:* {{ $json.lead.property_name }}\n📍 *Region:* {{ $json.lead.region }}\n⭐ *Grade:* {{ $json.lead.grade }} (Est. {{ $json.lead.estimated_revenue }})\n👤 *Owner:* {{ $json.lead.owner_name }} ({{ $json.lead.phone }})\n\n🔗 *Review in Kalimera CRM:*\nhttps://kalimera.lexmation.com/crm/",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-alert-alex",
+      "name": "Notify Alex on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Regional Scan (10:00 AM)": {
+      "main": [
+        [
+          {
+            "node": "Target Greek Regions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Target Greek Regions": {
+      "main": [
+        [
+          {
+            "node": "Perplexity Villa Discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity Villa Discovery": {
+      "main": [
+        [
+          {
+            "node": "AI SDR Audit & Copywriter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI SDR Audit & Copywriter": {
+      "main": [
+        [
+          {
+            "node": "Sync to Kalimera CRM API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync to Kalimera CRM API": {
+      "main": [
+        [
+          {
+            "node": "Notify Alex on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
