@@ -5,10 +5,10 @@
   "active": false,
   "activeVersionId": null,
   "createdAt": "2026-10-02T14:07:13.573Z",
-  "updatedAt": "2026-10-02T14:26:14.609Z",
+  "updatedAt": "2026-10-02T15:17:24.898Z",
   "isArchived": false,
-  "versionId": "46ccf2f7-8857-4686-b595-8c99fdabcff2",
-  "versionCounter": 12,
+  "versionId": "eeb110c7-dcd7-4806-9e68-7db88efa1cc8",
+  "versionCounter": 23,
   "sourceWorkflowId": null,
   "triggerCount": 0,
   "nodes": [
@@ -18,8 +18,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        200,
-        300
+        100,
+        240
       ],
       "parameters": {}
     },
@@ -29,11 +29,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        420,
-        300
+        500,
+        240
       ],
       "parameters": {
-        "jsCode": "return [\n  {\n    json: {\n      region: 'Nea Kallikrateia Beach',\n      query: 'rent apartment Nea Kallikratia beach'\n    }\n  }\n];"
+        "jsCode": "return [\n  { json: { region: 'Nea Kallikrateia', query: 'nea kalikratia apartament', page: 1 } },\n  { json: { region: 'Nea Kallikrateia', query: 'nea kalikratia apartament', page: 2 } },\n  { json: { region: 'Nea Kallikrateia', query: 'nea kalikratia apartament', page: 3 } },\n  { json: { region: 'Nea Kallikrateia', query: 'nea kalikratia apartament', page: 4 } },\n  { json: { region: 'Nea Kallikrateia', query: 'apartments Nea Kallikrateia', page: 1 } },\n  { json: { region: 'Nea Kallikrateia', query: 'apartments Nea Kallikrateia', page: 2 } },\n  { json: { region: 'Nea Kallikrateia', query: 'studios Nea Kallikrateia', page: 1 } }\n];"
       }
     },
     {
@@ -42,8 +42,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        640,
-        300
+        700,
+        240
       ],
       "parameters": {
         "method": "POST",
@@ -63,7 +63,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"q\": \"{{ $json.query }}\",\n  \"gl\": \"gr\",\n  \"hl\": \"en\",\n  \"num\": 20\n}",
+        "jsonBody": "={\n  \"q\": \"{{ $json.query }}\",\n  \"gl\": \"gr\",\n  \"hl\": \"en\",\n  \"page\": {{ $json.page || 1 }}\n}",
         "options": {}
       }
     },
@@ -73,11 +73,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
-        300
+        900,
+        240
       ],
       "parameters": {
-        "jsCode": "const places = $input.item.json.places || [];\nconst region = $('Set Regional Search Query').item.json.region || 'Nea Kallikrateia';\nconst output = [];\n\nfor (const p of places) {\n  let rawPhone = p.phoneNumber || '';\n  let cleanPhone = rawPhone.replace(/[^0-9+]/g, '');\n  if (cleanPhone.startsWith('69') && cleanPhone.length === 10) cleanPhone = '+30' + cleanPhone;\n  else if (cleanPhone.startsWith('30') && !cleanPhone.startsWith('+')) cleanPhone = '+' + cleanPhone;\n\n  let website = p.website || '';\n  if (website.includes('booking.com') || website.includes('airbnb.') || website.includes('tripadvisor.')) {\n    website = '';\n  }\n\n  // Only take entries with valid phones\n  if (cleanPhone.length >= 8) {\n    output.push({\n      json: {\n        property_name: p.title || 'Greek Vacation Rental',\n        phone: cleanPhone,\n        website: website,\n        address: p.address || 'Nea Kallikrateia, Halkidiki',\n        rating: p.rating || 4.8,\n        reviews_count: p.ratingCount || 10,\n        region: region\n      }\n    });\n  }\n}\n\nreturn output;"
+        "jsCode": "const existingLeads = $('Fetch Existing CRM Leads').first().json.leads || [];\nconst existingPhones = new Set();\nconst existingNames = new Set();\n\nfor (const l of existingLeads) {\n  if (l.phone) {\n    let clean = l.phone.replace(/[^0-9+]/g, '');\n    if (clean) existingPhones.add(clean);\n  }\n  if (l.property_name) {\n    existingNames.add(l.property_name.trim().toLowerCase());\n  }\n}\n\nconst seenInBatch = new Set();\nconst output = [];\n\nfor (const item of $input.all()) {\n  const places = item.json.places || [];\n\n  for (const p of places) {\n    let rawPhone = p.phoneNumber || '';\n    let cleanPhone = rawPhone.replace(/[^0-9+]/g, '');\n    if (cleanPhone.startsWith('69') && cleanPhone.length === 10) cleanPhone = '+30' + cleanPhone;\n    else if (cleanPhone.startsWith('30') && !cleanPhone.startsWith('+')) cleanPhone = '+' + cleanPhone;\n\n    let title = (p.title || '').trim();\n    let dedupeKey = cleanPhone || title.toLowerCase();\n\n    // 1. Skip if already processed in current batch\n    if (!dedupeKey || seenInBatch.has(dedupeKey)) continue;\n    seenInBatch.add(dedupeKey);\n\n    // 2. CRITICAL FILTER: Skip if ALREADY in CRM! (Zero AI tokens spent on duplicates)\n    if (existingPhones.has(cleanPhone) || existingNames.has(title.toLowerCase())) {\n      continue;\n    }\n\n    let website = p.website || '';\n    if (website.includes('booking.com') || website.includes('airbnb.') || website.includes('tripadvisor.')) {\n      website = '';\n    }\n\n    // Only take items with valid phone number\n    if (cleanPhone.length >= 8) {\n      output.push({\n        json: {\n          property_name: title || 'Greek Vacation Rental',\n          phone: cleanPhone,\n          website: website,\n          address: p.address || 'Nea Kallikrateia, Halkidiki',\n          rating: p.rating || 4.8,\n          reviews_count: p.ratingCount || 10,\n          region: 'Nea Kallikrateia'\n        }\n      });\n    }\n  }\n}\n\nreturn output;"
       }
     },
     {
@@ -86,8 +86,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1080,
-        300
+        1088,
+        304
       ],
       "parameters": {
         "options": {}
@@ -99,13 +99,18 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        1300,
-        380
+        1264,
+        368
       ],
       "parameters": {
+        "images": {
+          "values": [
+            {}
+          ]
+        },
         "modelId": {
           "__rl": true,
-          "value": "gpt-4o",
+          "value": "=gemini-3.8-flash-low",
           "mode": "id"
         },
         "responses": {
@@ -134,7 +139,7 @@
       "typeVersion": 2,
       "position": [
         1520,
-        380
+        384
       ],
       "parameters": {
         "jsCode": "let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch(e) {\n  parsed = { property_name: 'Greek Rental', notes: text, status: 'ai_audited' };\n}\n\nreturn { json: parsed };"
@@ -146,8 +151,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1740,
-        380
+        1744,
+        384
       ],
       "parameters": {
         "method": "POST",
@@ -157,6 +162,20 @@
         "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {}
       }
+    },
+    {
+      "id": "fetch-crm-leads",
+      "name": "Fetch Existing CRM Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        300,
+        240
+      ],
+      "parameters": {
+        "url": "https://kalimera.lexmation.com/crm/api.php?action=get_leads",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -164,7 +183,7 @@
       "main": [
         [
           {
-            "node": "Set Regional Search Query",
+            "node": "Fetch Existing CRM Leads",
             "type": "main",
             "index": 0
           }
@@ -243,6 +262,17 @@
         [
           {
             "node": "Loop Each Property",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Existing CRM Leads": {
+      "main": [
+        [
+          {
+            "node": "Set Regional Search Query",
             "type": "main",
             "index": 0
           }
