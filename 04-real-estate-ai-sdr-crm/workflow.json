@@ -1,52 +1,50 @@
 {
+  "id": "YbLsZ7rZYn9Efmue",
   "name": "Kalimera Greek Real Estate AI SDR & CRM Pipeline",
-  "settings": {},
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-02T14:07:13.573Z",
+  "updatedAt": "2026-10-02T14:26:14.609Z",
+  "isArchived": false,
+  "versionId": "46ccf2f7-8857-4686-b595-8c99fdabcff2",
+  "versionCounter": 12,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
   "nodes": [
     {
-      "parameters": {},
       "id": "manual-trigger",
-      "name": "When clicking ‘Test workflow’",
+      "name": "When clicking \u2018Test workflow\u2019",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        180,
-        240
-      ]
+        200,
+        300
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 24
-            }
-          ]
-        }
-      },
-      "id": "schedule-trigger",
-      "name": "Daily Regional Scan (10:00 AM)",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        180,
-        420
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "return [\n  {\n    json: {\n      region: 'Chalkidiki (Kassandra)',\n      query: 'villas rental Kassandra Chalkidiki'\n    }\n  }\n];"
-      },
       "id": "target-queries",
       "name": "Set Regional Search Query",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
-        320
-      ]
+        420,
+        300
+      ],
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      region: 'Nea Kallikrateia Beach',\n      query: 'rent apartment Nea Kallikratia beach'\n    }\n  }\n];"
+      }
     },
     {
+      "id": "serper-places",
+      "name": "Serper Google Places Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        640,
+        300
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://google.serper.dev/places",
@@ -65,68 +63,92 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"q\": \"{{ $json.query }}\",\n  \"gl\": \"gr\",\n  \"hl\": \"en\",\n  \"num\": 10\n}",
+        "jsonBody": "={\n  \"q\": \"{{ $json.query }}\",\n  \"gl\": \"gr\",\n  \"hl\": \"en\",\n  \"num\": 20\n}",
         "options": {}
-      },
-      "id": "serper-places",
-      "name": "Serper Google Places Search",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        620,
-        320
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const places = $input.item.json.places || [];\nconst region = $('Set Regional Search Query').item.json.region || 'Greece';\nconst output = [];\n\nfor (const p of places) {\n  let rawPhone = p.phoneNumber || '';\n  let cleanPhone = rawPhone.replace(/[^0-9+]/g, '');\n  \n  // Normalize Greek numbers\n  if (cleanPhone.startsWith('69') && cleanPhone.length === 10) {\n    cleanPhone = '+30' + cleanPhone;\n  } else if (cleanPhone.startsWith('30') && !cleanPhone.startsWith('+')) {\n    cleanPhone = '+' + cleanPhone;\n  }\n  \n  // Skip OTA platforms\n  let website = p.website || '';\n  if (website.includes('booking.com') || website.includes('airbnb.') || website.includes('tripadvisor.')) {\n    website = '';\n  }\n\n  output.push({\n    json: {\n      property_name: p.title || 'Greek Villa',\n      phone: cleanPhone || rawPhone,\n      raw_phone: rawPhone,\n      website: website,\n      address: p.address || '',\n      rating: p.rating || 4.8,\n      reviews_count: p.ratingCount || 10,\n      category: p.category || 'Vacation rental',\n      region: region\n    }\n  });\n}\n\nreturn output.slice(0, 5);"
-      },
       "id": "parse-places",
       "name": "Parse & Clean Villa Leads",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        840,
-        320
-      ]
+        860,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const places = $input.item.json.places || [];\nconst region = $('Set Regional Search Query').item.json.region || 'Nea Kallikrateia';\nconst output = [];\n\nfor (const p of places) {\n  let rawPhone = p.phoneNumber || '';\n  let cleanPhone = rawPhone.replace(/[^0-9+]/g, '');\n  if (cleanPhone.startsWith('69') && cleanPhone.length === 10) cleanPhone = '+30' + cleanPhone;\n  else if (cleanPhone.startsWith('30') && !cleanPhone.startsWith('+')) cleanPhone = '+' + cleanPhone;\n\n  let website = p.website || '';\n  if (website.includes('booking.com') || website.includes('airbnb.') || website.includes('tripadvisor.')) {\n    website = '';\n  }\n\n  // Only take entries with valid phones\n  if (cleanPhone.length >= 8) {\n    output.push({\n      json: {\n        property_name: p.title || 'Greek Vacation Rental',\n        phone: cleanPhone,\n        website: website,\n        address: p.address || 'Nea Kallikrateia, Halkidiki',\n        rating: p.rating || 4.8,\n        reviews_count: p.ratingCount || 10,\n        region: region\n      }\n    });\n  }\n}\n\nreturn output;"
+      }
     },
     {
+      "id": "loop-properties",
+      "name": "Loop Each Property",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1080,
+        300
+      ],
       "parameters": {
-        "model": "gpt-4o",
-        "options": {
-          "temperature": 0.3
-        },
-        "prompt": "=You are an elite hospitality consultant and AI SDR for Kalimera (lexmation.com).\n\nAnalyze this Greek vacation rental:\nProperty Name: {{ $json.property_name }}\nRegion: {{ $json.region }}\nRating: {{ $json.rating }} stars ({{ $json.reviews_count }} Google reviews)\nWebsite: {{ $json.website }}\nPhone: {{ $json.phone }}\nAddress: {{ $json.address }}\n\nTASKS:\n1. Audit the villa for 3 critical operational gaps:\n   - Calendar Sync: (e.g. Risk of double-bookings between OTAs and direct guests).\n   - Video Marketing: (e.g. Lack of cinematic vertical reels on Instagram/TikTok).\n   - Direct Booking Friction: (e.g. Inquiries handled via slow manual forms rather than instant WhatsApp confirmation).\n2. Assign Lead Grade: 'A+' (if high rating + luxury villa), 'A', or 'B'.\n3. Calculate realistic estimated seasonal revenue: '€40,000/season' or similar based on rating & size.\n4. Write a personalized Cold Email (English).\n5. Write a fluent, respectful, native Greek WhatsApp Opening Message (in Greek language) addressing the owner warmly and mentioning their villa by name.\n\nRETURN STRICT VALID JSON ONLY (no markdown fences, no ```json):\n{\n  \"property_name\": \"{{ $json.property_name }}\",\n  \"owner_name\": \"Property Owner\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"email\": \"\",\n  \"region\": \"{{ $json.region }}\",\n  \"website\": \"{{ $json.website }}\",\n  \"status\": \"ai_audited\",\n  \"grade\": \"A+\",\n  \"estimated_revenue\": \"€45,000/season\",\n  \"audit_findings\": {\n    \"calendar_sync\": \"...\",\n    \"video_marketing\": \"...\",\n    \"direct_booking\": \"...\"\n  },\n  \"ai_draft\": {\n    \"subject\": \"...\",\n    \"body\": \"...\",\n    \"whatsapp_msg\": \"...\"\n  },\n  \"notes\": \"Discovered via Serper Google Places scan. High Google rating ({{ $json.rating }}*).\"\n}"
-      },
+        "options": {}
+      }
+    },
+    {
       "id": "openai-sdr-audit",
       "name": "AI SDR Audit & Copywriter",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1.4,
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
       "position": [
-        1060,
-        320
+        1300,
+        380
       ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a Senior Hospitality Consultant and AI SDR for Kalimera (lexmation.com).\n\nProperty Name: {{ $json.property_name }}\nRegion: {{ $json.region }}\nRating: {{ $json.rating }}* ({{ $json.reviews_count }} reviews)\nWebsite: {{ $json.website }}\nPhone: {{ $json.phone }}\nAddress: {{ $json.address }}\n\nTASK:\n1. Audit for 3 gaps:\n   - Calendar Sync: (e.g. Risk of double-bookings between OTAs and direct guests).\n   - Video Marketing: (e.g. Lack of cinematic vertical reels on Instagram/TikTok).\n   - Direct Booking Friction: (e.g. Inquiries handled via slow manual forms rather than instant WhatsApp confirmation).\n2. Assign Grade: 'A+', 'A', or 'B'.\n3. Est. Seasonal Revenue: e.g. '\u20ac35,000/season' or '\u20ac45,000/season'.\n4. Personalized Cold Email (English).\n5. Native Greek WhatsApp Opening Message (in Greek language) addressing the owner warmly and mentioning their property name.\n\nRETURN STRICT VALID JSON ONLY (no markdown code blocks):\n{\n  \"property_name\": \"{{ $json.property_name }}\",\n  \"owner_name\": \"Property Owner\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"email\": \"\",\n  \"region\": \"{{ $json.region }}\",\n  \"website\": \"{{ $json.website }}\",\n  \"status\": \"ai_audited\",\n  \"grade\": \"A\",\n  \"estimated_revenue\": \"\u20ac35,000/season\",\n  \"audit_findings\": {\n    \"calendar_sync\": \"Missing direct cross-channel sync\",\n    \"video_marketing\": \"No vertical video reels found\",\n    \"direct_booking\": \"High OTA commission dependency\"\n  },\n  \"ai_draft\": {\n    \"subject\": \"Direct booking system & promo video for {{ $json.property_name }}\",\n    \"body\": \"Hi,\\n\\n...\",\n    \"whatsapp_msg\": \"\u0393\u03b5\u03b9\u03b1 \u03c3\u03b1\u03c2!...\"\n  },\n  \"notes\": \"Discovered in Nea Kallikrateia Beach scan. Google Rating: {{ $json.rating }}* ({{ $json.reviews_count }} reviews).\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "parallelToolCalls": false
+        }
+      },
       "credentials": {
         "openAiApi": {
-          "id": "OfK406remqyoMr6C",
-          "name": "OpenAI account"
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
         }
       }
     },
     {
-      "parameters": {
-        "jsCode": "let raw = $input.item.json.message?.content || $input.item.json.response || $input.item.json || {};\nif (typeof raw === 'string') {\n  raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\n  try {\n    raw = JSON.parse(raw);\n  } catch(e) {}\n}\nreturn { json: raw };"
-      },
       "id": "clean-json",
       "name": "Format Clean JSON Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1260,
-        320
-      ]
+        1520,
+        380
+      ],
+      "parameters": {
+        "jsCode": "let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch(e) {\n  parsed = { property_name: 'Greek Rental', notes: text, status: 'ai_audited' };\n}\n\nreturn { json: parsed };"
+      }
     },
     {
+      "id": "post-crm",
+      "name": "Sync to Kalimera CRM API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1740,
+        380
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://kalimera.lexmation.com/crm/api.php?action=add_lead",
@@ -134,30 +156,11 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {}
-      },
-      "id": "post-crm",
-      "name": "Sync to Kalimera CRM API",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1480,
-        320
-      ]
+      }
     }
   ],
   "connections": {
-    "When clicking ‘Test workflow’": {
-      "main": [
-        [
-          {
-            "node": "Set Regional Search Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Daily Regional Scan (10:00 AM)": {
+    "When clicking \u2018Test workflow\u2019": {
       "main": [
         [
           {
@@ -194,6 +197,18 @@
       "main": [
         [
           {
+            "node": "Loop Each Property",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Each Property": {
+      "main": [
+        [],
+        [
+          {
             "node": "AI SDR Audit & Copywriter",
             "type": "main",
             "index": 0
@@ -222,6 +237,47 @@
           }
         ]
       ]
+    },
+    "Sync to Kalimera CRM API": {
+      "main": [
+        [
+          {
+            "node": "Loop Each Property",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
-  }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "YbLsZ7rZYn9Efmue",
+      "projectId": "2aqhqfpnie4eg81l",
+      "project": {
+        "id": "2aqhqfpnie4eg81l",
+        "name": "Lexmation EOOD <lex.mation2026@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-06-23T11:05:36.196Z",
+        "updatedAt": "2026-06-24T17:09:53.950Z"
+      },
+      "createdAt": "2026-10-02T14:07:13.578Z",
+      "updatedAt": "2026-10-02T14:07:13.578Z"
+    }
+  ],
+  "activeVersion": null
 }
