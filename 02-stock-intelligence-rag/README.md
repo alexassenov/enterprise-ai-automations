@@ -233,3 +233,11 @@ This quantitative terminal and automation infrastructure was designed and deploy
 | **Custom AI Terminals & SaaS** | Custom web dashboards, streaming LLM chat with RAG, Vector DBs | Proprietary internal tools and branded client-facing portals |
 
 Explore our enterprise solutions and client case studies at: **[https://lexmation.com](https://lexmation.com)**
+
+---
+
+## 11. 📋 Changelog & Operations Log
+
+A complete chronological history of all bug fixes, engine optimizations, and architectural enhancements is maintained in **[CHANGELOG.md](./CHANGELOG.md)**.
+
+* **Latest Release:** `[2026-10-02]` — EOD Workflow Overhaul, Post-Scan Daily Summary in Telegram & Live Web Audit Dashboard.
