@@ -3,14 +3,14 @@
   "name": "Stock Multi-Timeframe & News Intelligence Alerter",
   "description": null,
   "active": true,
-  "activeVersionId": "1b082914-5536-4789-afab-05ab3c63c964",
+  "activeVersionId": "e15f4fc9-b844-4b50-baa3-f864cb6ab62b",
   "createdAt": "2026-08-27T14:57:39.468Z",
-  "updatedAt": "2026-09-25T09:06:08.266Z",
+  "updatedAt": "2026-10-02T21:13:57.000Z",
   "isArchived": false,
-  "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
-  "versionCounter": 200,
+  "versionId": "e15f4fc9-b844-4b50-baa3-f864cb6ab62b",
+  "versionCounter": 218,
   "sourceWorkflowId": null,
-  "triggerCount": 2,
+  "triggerCount": 4,
   "nodes": [
     {
       "id": "d558f29f-c665-49b9-9a31-0faf67611bdb",
@@ -43,6 +43,10 @@
       "name": "Append to Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
       "position": [
         1232,
         304
@@ -304,7 +308,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        608,
+        688,
         96
       ],
       "parameters": {
@@ -316,7 +320,7 @@
         "responses": {
           "values": [
             {
-              "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Telegram Stock Request Trigger').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\nANALYTICAL & RISK RULES:\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Stop Loss must provide breathing room against normal intraday market noise and liquidity sweeps: place it between 1.5% and 2.5% below entry for Longs (or above entry for Shorts), anchored to 15m/1h structural support or 1.5x-2x ATR. NEVER place tight stops on 5m wicks (e.g. < 1.0%), as this causes premature stop-outs from market noise. Minimum Risk/Reward (R:R) must strictly remain 1:2.0 or higher, with Target Price scaling accordingly (giving at least 2x the Stop Loss distance, e.g. 3.0% to 5.0%+ gain) and aligning with key daily/weekly resistance or liquidity pools.\n   - Target Price must align with daily/weekly key liquidity pools.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Telegram Stock Request Trigger').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
+              "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Loop Over Tickers').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($('Final AI Context Builder').item.json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\n\n\n[HISTORICAL TRADE MEMORY & CATALYST RAG CONTEXT]:\n{{ $('Fetch RAG Context').item.json.rag_context }}\n\nANALYTICAL & RISK RULES (Strictly Enforce All 4):\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Stop Loss must provide breathing room against normal intraday market noise and liquidity sweeps: place it between 1.5% and 2.5% below entry for Longs (or above entry for Shorts), anchored to 15m/1h structural support or 1.5x-2x ATR. NEVER place tight stops on 5m wicks (e.g. < 1.0%), as this causes premature stop-outs from market noise. Minimum Risk/Reward (R:R) must strictly remain 1:2.0 or higher, with Target Price scaling accordingly (giving at least 2x the Stop Loss distance, e.g. 3.0% to 5.0%+ gain) and aligning with key daily/weekly resistance or liquidity pools.\n   - Target Price must align with daily/weekly key liquidity pools.\n4. Historical Memory & RAG Integration:\n   - Review [HISTORICAL TRADE MEMORY]: If prior setups for this stock or similar profiles suffered stop-outs from noise or late session whipsaws, widen Stop Loss buffer (min 2.0%) and do not issue aggressive entries on low RVOL (< 1.5x).\n   - Review [CATALYST & NEWS CONTINUITY]: If current news merely repeats old litigation or known non-events from prior scans, do not treat it as a fresh shock. Keep Verdict as WATCH unless fresh institutional conviction confirms.\n   - Review [CURRENT GLOBAL MACRO ENVIRONMENT]: Align your Market_Trend and Verdict conviction with the broader sector sentiment and Watchlist Directive.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Loop Over Tickers').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
             }
           ]
         },
@@ -362,7 +366,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        432,
+        400,
         96
       ],
       "parameters": {
@@ -375,6 +379,10 @@
       "name": "Fetch 5M Market Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000,
+      "onError": "continueRegularOutput",
       "position": [
         -480,
         -176
@@ -414,6 +422,10 @@
       "name": "Fetch 15M Market Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000,
+      "onError": "continueRegularOutput",
       "position": [
         -480,
         32
@@ -453,6 +465,10 @@
       "name": "Fetch Daily Context Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000,
+      "onError": "continueRegularOutput",
       "position": [
         -480,
         240
@@ -531,100 +547,18 @@
       }
     },
     {
-      "id": "3dc1dab8-9c9d-4c51-bd94-4664ad0828bb",
-      "name": "Read Trades from Sheet",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        -304,
-        768
-      ],
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
-          "mode": "list",
-          "cachedResultName": "Trade_Log",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "Outcome",
-              "lookupValue": "Pending"
-            }
-          ]
-        },
-        "options": {
-          "outputRowNumber": true
-        }
-      },
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YKLDfEamB8A53Kro",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "id": "1976ce4b-0a0e-4ef2-932c-487d58b2a1ad",
-      "name": "Filter Pending Trades",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        768
-      ],
-      "parameters": {
-        "jsCode": "const items = $input.all();\nconst pendingTrades = [];\n\n// \u0414\u0430\u0442\u0430 \u043e\u0442\u043f\u0440\u0435\u0434\u0438 2 \u0434\u043d\u0438 (48 \u0447\u0430\u0441\u0430) \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 YYYY-MM-DD\nconst twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));\nconst cutoffDateStr = twoDaysAgo.toISOString().substring(0, 10);\n\nitems.forEach((item, index) => {\n  const row = item.json;\n  \n  // \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u043c\u0435 Outcome \u043d\u0430\u043f\u044a\u043b\u043d\u043e \u043d\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e \u043e\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u044a\u0440\u0430 (Pending, pending, PENDING)\n  const outcome = String(row.Outcome || \"\").trim().toLowerCase();\n  \n  if (outcome === \"pending\" || outcome === \"\") {\n    // \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u0434\u0430\u0442\u0430\u0442\u0430 YYYY-MM-DD \u043e\u0442 Date_Time\n    const dateStr = String(row.Date_Time || \"\").trim().substring(0, 10);\n    \n    // \u0421\u0440\u0430\u0432\u043d\u044f\u0432\u0430\u043c\u0435 \u0434\u0438\u0440\u0435\u043a\u0442\u043d\u043e \u0434\u0430\u0442\u0430\u0442\u0430 (\u0430\u043a\u043e \u0435 \u0434\u043d\u0435\u0441, \u0432\u0447\u0435\u0440\u0430 \u0438\u043b\u0438 \u0437\u0430\u0432\u0447\u0435\u0440\u0430)\n    const isRecent = !dateStr || dateStr >= cutoffDateStr;\n    \n    if (isRecent) {\n      pendingTrades.push({\n        json: {\n          ...row,\n          row_number: row.row_number || (index + 2)\n        }\n      });\n    }\n  }\n});\n\nreturn pendingTrades;"
-      }
-    },
-    {
-      "id": "2572c64a-9420-44e9-b6c7-37062ea5e359",
-      "name": "Loop Pending Trades",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        144,
-        768
-      ],
-      "parameters": {
-        "options": {}
-      }
-    },
-    {
-      "id": "08e188fa-99bf-4c00-9129-72954058c63c",
-      "name": "Evaluate Outcome Logic",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        576,
-        768
-      ],
-      "parameters": {
-        "jsCode": "const trade = $('Loop Pending Trades').item.json;\nconst candleData = $input.first().json.values?.[0] || {};\n\nconst high = parseFloat(candleData.high || 0);\nconst low = parseFloat(candleData.low || 0);\nconst close = parseFloat(candleData.close || 0);\n\nconst target = parseFloat(String(trade.Target_Price).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst stop = parseFloat(String(trade.Stop_Loss).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst entry = parseFloat(String(trade.Current_Price).replace(/[^0-9.-]+/g, \"\")) || close;\nconst verdict = (trade.Verdict || \"\").toUpperCase().trim();\nconst rrStr = trade.Risk_Reward ? \"+\" + String(trade.Risk_Reward).replace(\"1:\", \"\").trim() + \"R\" : \"+2.0R\";\n\nlet outcome = \"OPEN / EXPIRED\";\nlet pnl = \"0.0R\";\nlet exitPrice = close;\n\nif (verdict === \"BUY\") {\n  if (high >= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (low <= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (close - entry) / (entry - stop || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"SELL\" || verdict === \"SHORT\") {\n  if (low <= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (high >= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (entry - close) / (stop - entry || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"WATCH\") {\n  const isBullish = target > entry || target > stop;\n  if (isBullish) {\n    if (high >= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (low <= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakout)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  } else {\n    if (low <= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (high >= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakdown)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  }\n}\n\nreturn {\n  json: {\n    row_number: trade.row_number,\n    Date_Time: trade.Date_Time,\n    Ticker: trade.Ticker,\n    Verdict: trade.Verdict,\n    Outcome: outcome,\n    Exit_Price: exitPrice.toFixed(2),\n    Realized_PnL: pnl,\n    Daily_High: high,\n    Daily_Low: low,\n    Daily_Close: close\n  }\n};"
-      }
-    },
-    {
       "id": "b4064cbd-2ac8-4bc7-8ce1-0e88066d160e",
       "name": "Send EOD Telegram Report",
       "webhookId": "8a373f9f-4d6c-4cab-83f1-32da5974e896",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        800,
-        864
+        850,
+        800
       ],
       "parameters": {
         "chatId": "8643751612",
-        "text": "=\ud83d\udcca <b>EOD TRADE OUTCOME: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }}\n\ud83c\udfc1 <b>Outcome:</b> {{ $json.Outcome }}\n\ud83d\udcb0 <b>PnL:</b> <code>{{ $json.Realized_PnL }}</code>\n\ud83d\udcb5 <b>Exit / Close:</b> ${{ $json.Exit_Price }}\n\n\ud83d\udcc8 <b>Day Range:</b> Low ${{ $json.Daily_Low }} \u2014 High ${{ $json.Daily_High }}",
+        "text": "={{ $json.telegram_text }}",
         "additionalFields": {
           "parse_mode": "HTML"
         }
@@ -637,247 +571,13 @@
       }
     },
     {
-      "id": "c972d814-6b57-4991-a60d-549d7875ebca",
-      "name": "Fetch EOD Daily Candle",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        384,
-        768
-      ],
-      "parameters": {
-        "url": "https://api.twelvedata.com/time_series",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpQueryAuth",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "symbol",
-              "value": "={{ $json.Ticker }}"
-            },
-            {
-              "name": "interval",
-              "value": "1day"
-            },
-            {
-              "name": "outputsize",
-              "value": "1"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "credentials": {
-        "httpQueryAuth": {
-          "id": "rW4ms4hNszUgLoK2",
-          "name": "Query Auth account"
-        }
-      }
-    },
-    {
-      "id": "ec82fa31-87de-4b08-b3a5-765527151aad",
-      "name": "Update Outcome in Sheet",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        784,
-        640
-      ],
-      "parameters": {
-        "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
-          "mode": "list",
-          "cachedResultName": "Trade_Log",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "row_number": "={{ $json.row_number }}",
-            "Outcome": "={{ $json.Outcome }}",
-            "Realsied_PnL": "={{ $json.Realized_PnL }}"
-          },
-          "matchingColumns": [
-            "row_number"
-          ],
-          "schema": [
-            {
-              "id": "Date_Time",
-              "displayName": "Date_Time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Ticker",
-              "displayName": "Ticker",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Verdict",
-              "displayName": "Verdict",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Confidence",
-              "displayName": "Confidence",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Current_Price",
-              "displayName": "Current_Price",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Entry_Trigger",
-              "displayName": "Entry_Trigger",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Stop_Loss",
-              "displayName": "Stop_Loss",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Target_Price",
-              "displayName": "Target_Price",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Risk_Reward",
-              "displayName": "Risk_Reward",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Catalyst_Headline",
-              "displayName": "Catalyst_Headline",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Outcome",
-              "displayName": "Outcome",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Realsied_PnL",
-              "displayName": "Realsied_PnL",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Notes",
-              "displayName": "Notes",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "RVOL",
-              "displayName": "RVOL",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Market Trend",
-              "displayName": "Market Trend",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true,
-              "readOnly": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YKLDfEamB8A53Kro",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
       "id": "7a3f8921-b452-4720-92de-syncwebsite01",
       "name": "Sync Website Terminal",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1392,
-        -96
+        600,
+        800
       ],
       "parameters": {
         "url": "https://stocks.lexmation.com/api.php",
@@ -886,18 +586,144 @@
           "parameters": [
             {
               "name": "action",
-              "value": "sync"
+              "value": "daily_scan_summary"
             }
           ]
         },
         "options": {}
       }
+    },
+    {
+      "id": "manual-eod-trigger-01",
+      "name": "Manual EOD Trigger",
+      "webhookId": "manual-eod-eval-webhook-01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        928
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-eod-eval",
+        "options": {}
+      }
+    },
+    {
+      "id": "schedule-1715-daily-stocks-trigger",
+      "name": "Daily 17:15 Scan Trigger",
+      "disabled": true,
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1344,
+        160
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 17 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "webhook-manual-daily-scan",
+      "name": "Manual Daily Scan Webhook",
+      "webhookId": "8c7e3543-9602-4e7d-9f9d-6d00f32b7495",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        320
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "daily-stocks-scan",
+        "options": {}
+      }
+    },
+    {
+      "id": "code-prepare-10-daily-stocks",
+      "name": "Prepare 10 Daily Stocks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const tickers = [\"NBIS\", \"APP\", \"META\", \"IREN\", \"EOSE\", \"CRWV\", \"HIMS\", \"CRDO\", \"OUST\", \"MU\"];\nreturn tickers.map(t => ({\n  json: {\n    message: { text: t },\n    Ticker: t\n  }\n}));"
+      }
+    },
+    {
+      "id": "wait-25-seconds-between-tickers",
+      "name": "Wait 32 Seconds Between Tickers",
+      "webhookId": "185ee6fe-9566-43f1-ac85-f78b9bad6b75",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1456,
+        304
+      ],
+      "parameters": {
+        "amount": 32
+      }
+    },
+    {
+      "id": "fetch-rag-context-node",
+      "name": "Fetch RAG Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        544,
+        96
+      ],
+      "parameters": {
+        "url": "=https://stocks.lexmation.com/api.php?action=rag_context&ticker={{ $('Loop Over Tickers').item.json.message.text }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "node-daily-scan-tg-summary",
+      "name": "Send Daily Scan Summary Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1650,
+        -96
+      ],
+      "parameters": {
+        "chatId": "8643751612",
+        "text": "={{ $json.telegram_text }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "XpsxJBZxAWu4uQK0",
+          "name": "Telegram account"
+        }
+      },
+      "webhookId": "6a043dff-f39e-4dc4-8cf4-6a4dbca1fcb5"
     }
   ],
   "connections": {
     "Loop Over Tickers": {
       "main": [
-        [],
+        [
+          {
+            "node": "Sync Website Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Message a model",
@@ -929,11 +755,6 @@
             "node": "Append to Google Sheets",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Send Telegram Alert",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -942,7 +763,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Tickers",
+            "node": "Wait 32 Seconds Between Tickers",
             "type": "main",
             "index": 0
           }
@@ -997,7 +818,7 @@
       "main": [
         [
           {
-            "node": "Analyst",
+            "node": "Fetch RAG Context",
             "type": "main",
             "index": 0
           }
@@ -1039,92 +860,14 @@
     },
     "Telegram Stock Request Trigger": {
       "main": [
-        [
-          {
-            "node": "Loop Over Tickers",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Market Close (23:30 Mon-Fri)": {
       "main": [
         [
           {
-            "node": "Read Trades from Sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Trades from Sheet": {
-      "main": [
-        [
-          {
-            "node": "Filter Pending Trades",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Filter Pending Trades": {
-      "main": [
-        [
-          {
-            "node": "Loop Pending Trades",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Pending Trades": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Fetch EOD Daily Candle",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Evaluate Outcome Logic": {
-      "main": [
-        [
-          {
-            "node": "Send EOD Telegram Report",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Update Outcome in Sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch EOD Daily Candle": {
-      "main": [
-        [
-          {
-            "node": "Evaluate Outcome Logic",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Outcome in Sheet": {
-      "main": [
-        [
-          {
-            "node": "Loop Pending Trades",
+            "node": "Sync Website Terminal",
             "type": "main",
             "index": 0
           }
@@ -1144,9 +887,85 @@
     },
     "Send EOD Telegram Report": {
       "main": [
+        []
+      ]
+    },
+    "Manual EOD Trigger": {
+      "main": [
         [
           {
             "node": "Sync Website Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 17:15 Scan Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare 10 Daily Stocks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Daily Scan Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare 10 Daily Stocks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare 10 Daily Stocks": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 32 Seconds Between Tickers": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RAG Context": {
+      "main": [
+        [
+          {
+            "node": "Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Website Terminal": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Scan Summary Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send EOD Telegram Report",
             "type": "main",
             "index": 0
           }
@@ -1157,10 +976,19 @@
   "nodeGroups": [],
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timezone": "Europe/Sofia"
   },
   "staticData": {
     "node:Market Close (23:30 Mon-Fri)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Daily 17:15 Scan Trigger": {
       "recurrenceRules": [
         null
       ],
@@ -1195,7 +1023,7 @@
     }
   ],
   "activeVersion": {
-    "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
+    "versionId": "e15f4fc9-b844-4b50-baa3-f864cb6ab62b",
     "workflowId": "Pwh5dGkS9VCUECF5",
     "nodes": [
       {
@@ -1229,6 +1057,10 @@
         "name": "Append to Google Sheets",
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.5,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "onError": "continueRegularOutput",
         "position": [
           1232,
           304
@@ -1490,7 +1322,7 @@
         "type": "@n8n/n8n-nodes-langchain.openAi",
         "typeVersion": 2.3,
         "position": [
-          608,
+          688,
           96
         ],
         "parameters": {
@@ -1502,7 +1334,7 @@
           "responses": {
             "values": [
               {
-                "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Telegram Stock Request Trigger').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\nANALYTICAL & RISK RULES:\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Minimum R:R must be 1:2.0. Stop Loss must be placed at the structural invalidation level (below swing low or consolidation base on 5m).\n   - Target Price must align with daily/weekly key liquidity pools.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Telegram Stock Request Trigger').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
+                "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Loop Over Tickers').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($('Final AI Context Builder').item.json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\n\n\n[HISTORICAL TRADE MEMORY & CATALYST RAG CONTEXT]:\n{{ $('Fetch RAG Context').item.json.rag_context }}\n\nANALYTICAL & RISK RULES (Strictly Enforce All 4):\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Stop Loss must provide breathing room against normal intraday market noise and liquidity sweeps: place it between 1.5% and 2.5% below entry for Longs (or above entry for Shorts), anchored to 15m/1h structural support or 1.5x-2x ATR. NEVER place tight stops on 5m wicks (e.g. < 1.0%), as this causes premature stop-outs from market noise. Minimum Risk/Reward (R:R) must strictly remain 1:2.0 or higher, with Target Price scaling accordingly (giving at least 2x the Stop Loss distance, e.g. 3.0% to 5.0%+ gain) and aligning with key daily/weekly resistance or liquidity pools.\n   - Target Price must align with daily/weekly key liquidity pools.\n4. Historical Memory & RAG Integration:\n   - Review [HISTORICAL TRADE MEMORY]: If prior setups for this stock or similar profiles suffered stop-outs from noise or late session whipsaws, widen Stop Loss buffer (min 2.0%) and do not issue aggressive entries on low RVOL (< 1.5x).\n   - Review [CATALYST & NEWS CONTINUITY]: If current news merely repeats old litigation or known non-events from prior scans, do not treat it as a fresh shock. Keep Verdict as WATCH unless fresh institutional conviction confirms.\n   - Review [CURRENT GLOBAL MACRO ENVIRONMENT]: Align your Market_Trend and Verdict conviction with the broader sector sentiment and Watchlist Directive.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Loop Over Tickers').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
               }
             ]
           },
@@ -1548,7 +1380,7 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          432,
+          400,
           96
         ],
         "parameters": {
@@ -1561,6 +1393,10 @@
         "name": "Fetch 5M Market Data",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 15000,
+        "onError": "continueRegularOutput",
         "position": [
           -480,
           -176
@@ -1600,6 +1436,10 @@
         "name": "Fetch 15M Market Data",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 15000,
+        "onError": "continueRegularOutput",
         "position": [
           -480,
           32
@@ -1639,6 +1479,10 @@
         "name": "Fetch Daily Context Data",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 15000,
+        "onError": "continueRegularOutput",
         "position": [
           -480,
           240
@@ -1717,100 +1561,18 @@
         }
       },
       {
-        "id": "3dc1dab8-9c9d-4c51-bd94-4664ad0828bb",
-        "name": "Read Trades from Sheet",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.5,
-        "position": [
-          -304,
-          768
-        ],
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
-            "mode": "list",
-            "cachedResultName": "Trade_Log",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "gid=0",
-            "mode": "list",
-            "cachedResultName": "Sheet1",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
-          },
-          "filtersUI": {
-            "values": [
-              {
-                "lookupColumn": "Outcome",
-                "lookupValue": "Pending"
-              }
-            ]
-          },
-          "options": {
-            "outputRowNumber": true
-          }
-        },
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "YKLDfEamB8A53Kro",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "id": "1976ce4b-0a0e-4ef2-932c-487d58b2a1ad",
-        "name": "Filter Pending Trades",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          -80,
-          768
-        ],
-        "parameters": {
-          "jsCode": "const items = $input.all();\nconst pendingTrades = [];\n\n// \u0414\u0430\u0442\u0430 \u043e\u0442\u043f\u0440\u0435\u0434\u0438 2 \u0434\u043d\u0438 (48 \u0447\u0430\u0441\u0430) \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 YYYY-MM-DD\nconst twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));\nconst cutoffDateStr = twoDaysAgo.toISOString().substring(0, 10);\n\nitems.forEach((item, index) => {\n  const row = item.json;\n  \n  // \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u043c\u0435 Outcome \u043d\u0430\u043f\u044a\u043b\u043d\u043e \u043d\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e \u043e\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u044a\u0440\u0430 (Pending, pending, PENDING)\n  const outcome = String(row.Outcome || \"\").trim().toLowerCase();\n  \n  if (outcome === \"pending\" || outcome === \"\") {\n    // \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u0434\u0430\u0442\u0430\u0442\u0430 YYYY-MM-DD \u043e\u0442 Date_Time\n    const dateStr = String(row.Date_Time || \"\").trim().substring(0, 10);\n    \n    // \u0421\u0440\u0430\u0432\u043d\u044f\u0432\u0430\u043c\u0435 \u0434\u0438\u0440\u0435\u043a\u0442\u043d\u043e \u0434\u0430\u0442\u0430\u0442\u0430 (\u0430\u043a\u043e \u0435 \u0434\u043d\u0435\u0441, \u0432\u0447\u0435\u0440\u0430 \u0438\u043b\u0438 \u0437\u0430\u0432\u0447\u0435\u0440\u0430)\n    const isRecent = !dateStr || dateStr >= cutoffDateStr;\n    \n    if (isRecent) {\n      pendingTrades.push({\n        json: {\n          ...row,\n          row_number: row.row_number || (index + 2)\n        }\n      });\n    }\n  }\n});\n\nreturn pendingTrades;"
-        }
-      },
-      {
-        "id": "2572c64a-9420-44e9-b6c7-37062ea5e359",
-        "name": "Loop Pending Trades",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 3,
-        "position": [
-          144,
-          768
-        ],
-        "parameters": {
-          "options": {}
-        }
-      },
-      {
-        "id": "08e188fa-99bf-4c00-9129-72954058c63c",
-        "name": "Evaluate Outcome Logic",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          576,
-          768
-        ],
-        "parameters": {
-          "jsCode": "const trade = $('Loop Pending Trades').item.json;\nconst candleData = $input.first().json.values?.[0] || {};\n\nconst high = parseFloat(candleData.high || 0);\nconst low = parseFloat(candleData.low || 0);\nconst close = parseFloat(candleData.close || 0);\n\nconst target = parseFloat(String(trade.Target_Price).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst stop = parseFloat(String(trade.Stop_Loss).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst entry = parseFloat(String(trade.Current_Price).replace(/[^0-9.-]+/g, \"\")) || close;\nconst verdict = (trade.Verdict || \"\").toUpperCase().trim();\nconst rrStr = trade.Risk_Reward ? \"+\" + String(trade.Risk_Reward).replace(\"1:\", \"\").trim() + \"R\" : \"+2.0R\";\n\nlet outcome = \"OPEN / EXPIRED\";\nlet pnl = \"0.0R\";\nlet exitPrice = close;\n\nif (verdict === \"BUY\") {\n  if (high >= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (low <= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (close - entry) / (entry - stop || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"SELL\" || verdict === \"SHORT\") {\n  if (low <= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (high >= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (entry - close) / (stop - entry || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"WATCH\") {\n  const isBullish = target > entry || target > stop;\n  if (isBullish) {\n    if (high >= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (low <= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakout)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  } else {\n    if (low <= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (high >= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakdown)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  }\n}\n\nreturn {\n  json: {\n    row_number: trade.row_number,\n    Date_Time: trade.Date_Time,\n    Ticker: trade.Ticker,\n    Verdict: trade.Verdict,\n    Outcome: outcome,\n    Exit_Price: exitPrice.toFixed(2),\n    Realized_PnL: pnl,\n    Daily_High: high,\n    Daily_Low: low,\n    Daily_Close: close\n  }\n};"
-        }
-      },
-      {
         "id": "b4064cbd-2ac8-4bc7-8ce1-0e88066d160e",
         "name": "Send EOD Telegram Report",
         "webhookId": "8a373f9f-4d6c-4cab-83f1-32da5974e896",
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          800,
-          864
+          850,
+          800
         ],
         "parameters": {
           "chatId": "8643751612",
-          "text": "=\ud83d\udcca <b>EOD TRADE OUTCOME: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }}\n\ud83c\udfc1 <b>Outcome:</b> {{ $json.Outcome }}\n\ud83d\udcb0 <b>PnL:</b> <code>{{ $json.Realized_PnL }}</code>\n\ud83d\udcb5 <b>Exit / Close:</b> ${{ $json.Exit_Price }}\n\n\ud83d\udcc8 <b>Day Range:</b> Low ${{ $json.Daily_Low }} \u2014 High ${{ $json.Daily_High }}",
+          "text": "={{ $json.telegram_text }}",
           "additionalFields": {
             "parse_mode": "HTML"
           }
@@ -1823,247 +1585,13 @@
         }
       },
       {
-        "id": "c972d814-6b57-4991-a60d-549d7875ebca",
-        "name": "Fetch EOD Daily Candle",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          384,
-          768
-        ],
-        "parameters": {
-          "url": "https://api.twelvedata.com/time_series",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpQueryAuth",
-          "sendQuery": true,
-          "queryParameters": {
-            "parameters": [
-              {
-                "name": "symbol",
-                "value": "={{ $json.Ticker }}"
-              },
-              {
-                "name": "interval",
-                "value": "1day"
-              },
-              {
-                "name": "outputsize",
-                "value": "1"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "credentials": {
-          "httpQueryAuth": {
-            "id": "rW4ms4hNszUgLoK2",
-            "name": "Query Auth account"
-          }
-        }
-      },
-      {
-        "id": "ec82fa31-87de-4b08-b3a5-765527151aad",
-        "name": "Update Outcome in Sheet",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.5,
-        "position": [
-          784,
-          640
-        ],
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
-            "mode": "list",
-            "cachedResultName": "Trade_Log",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "gid=0",
-            "mode": "list",
-            "cachedResultName": "Sheet1",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "row_number": "={{ $json.row_number }}",
-              "Outcome": "={{ $json.Outcome }}",
-              "Realsied_PnL": "={{ $json.Realized_PnL }}"
-            },
-            "matchingColumns": [
-              "row_number"
-            ],
-            "schema": [
-              {
-                "id": "Date_Time",
-                "displayName": "Date_Time",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Ticker",
-                "displayName": "Ticker",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Verdict",
-                "displayName": "Verdict",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Confidence",
-                "displayName": "Confidence",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Current_Price",
-                "displayName": "Current_Price",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Entry_Trigger",
-                "displayName": "Entry_Trigger",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Stop_Loss",
-                "displayName": "Stop_Loss",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Target_Price",
-                "displayName": "Target_Price",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Risk_Reward",
-                "displayName": "Risk_Reward",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Catalyst_Headline",
-                "displayName": "Catalyst_Headline",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Outcome",
-                "displayName": "Outcome",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Realsied_PnL",
-                "displayName": "Realsied_PnL",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Notes",
-                "displayName": "Notes",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "RVOL",
-                "displayName": "RVOL",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Market Trend",
-                "displayName": "Market Trend",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "row_number",
-                "displayName": "row_number",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "number",
-                "canBeUsedToMatch": true,
-                "readOnly": true,
-                "removed": false
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "YKLDfEamB8A53Kro",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
         "id": "7a3f8921-b452-4720-92de-syncwebsite01",
         "name": "Sync Website Terminal",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1392,
-          -96
+          600,
+          800
         ],
         "parameters": {
           "url": "https://stocks.lexmation.com/api.php",
@@ -2072,18 +1600,144 @@
             "parameters": [
               {
                 "name": "action",
-                "value": "sync"
+                "value": "daily_scan_summary"
               }
             ]
           },
           "options": {}
         }
+      },
+      {
+        "id": "manual-eod-trigger-01",
+        "name": "Manual EOD Trigger",
+        "webhookId": "manual-eod-eval-webhook-01",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -528,
+          928
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "trigger-eod-eval",
+          "options": {}
+        }
+      },
+      {
+        "id": "schedule-1715-daily-stocks-trigger",
+        "name": "Daily 17:15 Scan Trigger",
+        "disabled": true,
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -1344,
+          160
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "15 17 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "webhook-manual-daily-scan",
+        "name": "Manual Daily Scan Webhook",
+        "webhookId": "8c7e3543-9602-4e7d-9f9d-6d00f32b7495",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -1344,
+          320
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "daily-stocks-scan",
+          "options": {}
+        }
+      },
+      {
+        "id": "code-prepare-10-daily-stocks",
+        "name": "Prepare 10 Daily Stocks",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1072,
+          320
+        ],
+        "parameters": {
+          "jsCode": "const tickers = [\"NBIS\", \"APP\", \"META\", \"IREN\", \"EOSE\", \"CRWV\", \"HIMS\", \"CRDO\", \"OUST\", \"MU\"];\nreturn tickers.map(t => ({\n  json: {\n    message: { text: t },\n    Ticker: t\n  }\n}));"
+        }
+      },
+      {
+        "id": "wait-25-seconds-between-tickers",
+        "name": "Wait 32 Seconds Between Tickers",
+        "webhookId": "185ee6fe-9566-43f1-ac85-f78b9bad6b75",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1456,
+          304
+        ],
+        "parameters": {
+          "amount": 32
+        }
+      },
+      {
+        "id": "fetch-rag-context-node",
+        "name": "Fetch RAG Context",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          544,
+          96
+        ],
+        "parameters": {
+          "url": "=https://stocks.lexmation.com/api.php?action=rag_context&ticker={{ $('Loop Over Tickers').item.json.message.text }}",
+          "options": {
+            "timeout": 10000
+          }
+        }
+      },
+      {
+        "id": "node-daily-scan-tg-summary",
+        "name": "Send Daily Scan Summary Telegram",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1650,
+          -96
+        ],
+        "parameters": {
+          "chatId": "8643751612",
+          "text": "={{ $json.telegram_text }}",
+          "additionalFields": {
+            "parse_mode": "HTML"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "XpsxJBZxAWu4uQK0",
+            "name": "Telegram account"
+          }
+        },
+        "webhookId": "6a043dff-f39e-4dc4-8cf4-6a4dbca1fcb5"
       }
     ],
     "connections": {
       "Loop Over Tickers": {
         "main": [
-          [],
+          [
+            {
+              "node": "Sync Website Terminal",
+              "type": "main",
+              "index": 0
+            }
+          ],
           [
             {
               "node": "Message a model",
@@ -2115,11 +1769,6 @@
               "node": "Append to Google Sheets",
               "type": "main",
               "index": 0
-            },
-            {
-              "node": "Send Telegram Alert",
-              "type": "main",
-              "index": 0
             }
           ]
         ]
@@ -2128,7 +1777,7 @@
         "main": [
           [
             {
-              "node": "Loop Over Tickers",
+              "node": "Wait 32 Seconds Between Tickers",
               "type": "main",
               "index": 0
             }
@@ -2183,7 +1832,7 @@
         "main": [
           [
             {
-              "node": "Analyst",
+              "node": "Fetch RAG Context",
               "type": "main",
               "index": 0
             }
@@ -2225,92 +1874,14 @@
       },
       "Telegram Stock Request Trigger": {
         "main": [
-          [
-            {
-              "node": "Loop Over Tickers",
-              "type": "main",
-              "index": 0
-            }
-          ]
+          []
         ]
       },
       "Market Close (23:30 Mon-Fri)": {
         "main": [
           [
             {
-              "node": "Read Trades from Sheet",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read Trades from Sheet": {
-        "main": [
-          [
-            {
-              "node": "Filter Pending Trades",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Filter Pending Trades": {
-        "main": [
-          [
-            {
-              "node": "Loop Pending Trades",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Loop Pending Trades": {
-        "main": [
-          [],
-          [
-            {
-              "node": "Fetch EOD Daily Candle",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Evaluate Outcome Logic": {
-        "main": [
-          [
-            {
-              "node": "Send EOD Telegram Report",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Update Outcome in Sheet",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Fetch EOD Daily Candle": {
-        "main": [
-          [
-            {
-              "node": "Evaluate Outcome Logic",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Update Outcome in Sheet": {
-        "main": [
-          [
-            {
-              "node": "Loop Pending Trades",
+              "node": "Sync Website Terminal",
               "type": "main",
               "index": 0
             }
@@ -2330,9 +1901,85 @@
       },
       "Send EOD Telegram Report": {
         "main": [
+          []
+        ]
+      },
+      "Manual EOD Trigger": {
+        "main": [
           [
             {
               "node": "Sync Website Terminal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily 17:15 Scan Trigger": {
+        "main": [
+          [
+            {
+              "node": "Prepare 10 Daily Stocks",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Daily Scan Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prepare 10 Daily Stocks",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare 10 Daily Stocks": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Tickers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 32 Seconds Between Tickers": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Tickers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch RAG Context": {
+        "main": [
+          [
+            {
+              "node": "Analyst",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sync Website Terminal": {
+        "main": [
+          [
+            {
+              "node": "Send Daily Scan Summary Telegram",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Send EOD Telegram Report",
               "type": "main",
               "index": 0
             }
@@ -2345,16 +1992,16 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "createdAt": "2026-09-25T09:06:08.269Z",
-    "updatedAt": "2026-09-25T09:06:08.269Z",
+    "createdAt": "2026-10-02T21:13:57.010Z",
+    "updatedAt": "2026-10-02T21:13:57.010Z",
     "workflowPublishHistory": [
       {
-        "id": 51,
+        "id": 114,
         "workflowId": "Pwh5dGkS9VCUECF5",
-        "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
+        "versionId": "e15f4fc9-b844-4b50-baa3-f864cb6ab62b",
         "event": "activated",
         "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
-        "createdAt": "2026-09-25T09:06:08.340Z"
+        "createdAt": "2026-10-02T21:13:57.260Z"
       }
     ]
   }
