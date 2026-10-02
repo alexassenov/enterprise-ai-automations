@@ -1,0 +1,25 @@
+# Environment variables and secrets
+.env
+.env.*
+*.key
+key
+secrets.json
+credentials.json
+token.json
+
+# Python & Node
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+node_modules/
+
+# Logs & Temp
+*.log
+.DS_Store
+*.tmp
+.idea/
+.vscode/

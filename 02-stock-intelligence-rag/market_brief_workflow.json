@@ -1,0 +1,189 @@
+{
+  "name": "Global Market Brief - Daily AI Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "market-brief",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "market-brief-trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fetch multiple RSS feeds for global market news\nconst feeds = [\n  { name: 'Reuters Business', url: 'https://feeds.reuters.com/reuters/businessNews' },\n  { name: 'Yahoo Finance', url: 'https://finance.yahoo.com/news/rssindex' },\n  { name: 'CNBC Top News', url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114' },\n  { name: 'MarketWatch', url: 'https://feeds.marketwatch.com/marketwatch/topstories/' },\n  { name: 'Investing.com', url: 'https://www.investing.com/rss/news.rss' }\n];\n\nreturn feeds.map(f => ({ json: f }));"
+      },
+      "id": "prepare-feeds",
+      "name": "Prepare RSS Feeds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "fetch-rss",
+      "name": "Fetch RSS Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse RSS XML and extract article titles + descriptions\nconst items = $input.all();\nconst articles = [];\n\nfor (const item of items) {\n  const xml = item.json.data || '';\n  const feedName = item.json.name || 'Unknown';\n  \n  // Extract <item> elements from RSS\n  const itemMatches = xml.match(/<item[^>]*>([\\s\\S]*?)<\\/item>/gi) || [];\n  \n  for (const rawItem of itemMatches.slice(0, 8)) { // Max 8 per feed\n    const titleMatch = rawItem.match(/<title>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/);\n    const descMatch = rawItem.match(/<description>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/description>/);\n    const pubDateMatch = rawItem.match(/<pubDate>([\\s\\S]*?)<\\/pubDate>/);\n    \n    const title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : '';\n    const desc = descMatch ? descMatch[1].trim().replace(/<[^>]+>/g, '').substring(0, 300) : '';\n    \n    if (title && title.length > 10) {\n      articles.push(`[${feedName}] ${title}. ${desc}`);\n    }\n  }\n}\n\n// Deduplicate and limit\nconst unique = [...new Set(articles)].slice(0, 40);\nconst newsText = unique.join('\\n---\\n');\n\nconsole.log(`Collected ${unique.length} articles for AI analysis`);\n\nreturn [{ json: { news_text: newsText, article_count: unique.length, fetched_at: new Date().toISOString() } }];"
+      },
+      "id": "parse-rss",
+      "name": "Parse & Aggregate RSS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Ти си експертен финансов анализатор. Анализираш глобални новини и обясняваш как влияят на финансовите пазари. Отговаряш САМО с валиден JSON обект. Не добавяй markdown, не добавяй ```json, само чистия JSON."
+            },
+            {
+              "role": "user",
+              "content": "=Анализирай следните новини от последните 24 часа и генерирай структуриран пазарен бриф.\n\nНОВИНИ:\n{{ $json.news_text }}\n\nВЪЗВРЪЩАЙ САМО валиден JSON в следния формат (без markdown, без обяснения, само JSON):\n{\n  \"generated_at\": \"ISO timestamp\",\n  \"overall_sentiment\": \"BULLISH\" | \"BEARISH\" | \"NEUTRAL\" | \"MIXED\",\n  \"sentiment_score\": число от -100 до +100,\n  \"executive_summary\": \"2-3 изречения обобщение на пазарното настроение\",\n  \"macro\": {\n    \"sentiment\": \"BULLISH\" | \"BEARISH\" | \"NEUTRAL\",\n    \"emoji\": \"🌍\",\n    \"title\": \"Макро & Геополитика\",\n    \"summary\": \"Обобщение за макро новини\",\n    \"key_points\": [\"точка 1\", \"точка 2\", \"точка 3\"]\n  },\n  \"equities\": {\n    \"sentiment\": \"BULLISH\" | \"BEARISH\" | \"NEUTRAL\",\n    \"emoji\": \"📈\",\n    \"title\": \"Акции & Индекси\",\n    \"summary\": \"S&P 500, Nasdaq, Dow Jones настроение\",\n    \"key_points\": [\"точка 1\", \"точка 2\", \"точка 3\"],\n    \"hot_sectors\": [\n      {\"name\": \"Tech\", \"sentiment\": \"BULLISH\", \"reason\": \"кратка причина\"},\n      {\"name\": \"Energy\", \"sentiment\": \"BEARISH\", \"reason\": \"кратка причина\"},\n      {\"name\": \"Finance\", \"sentiment\": \"NEUTRAL\", \"reason\": \"кратка причина\"}\n    ]\n  },\n  \"gold\": {\n    \"sentiment\": \"BULLISH\" | \"BEARISH\" | \"NEUTRAL\",\n    \"emoji\": \"🥇\",\n    \"title\": \"Злато & Суровини\",\n    \"summary\": \"Как новините влияят на злато, петрол, суровини\",\n    \"key_points\": [\"точка 1\", \"точка 2\"]\n  },\n  \"crypto\": {\n    \"sentiment\": \"BULLISH\" | \"BEARISH\" | \"NEUTRAL\",\n    \"emoji\": \"₿\",\n    \"title\": \"Криптовалути\",\n    \"summary\": \"Как макро средата влияе на BTC, ETH и крипто като цяло\",\n    \"key_points\": [\"точка 1\", \"точка 2\"]\n  },\n  \"risk_factors\": [\"риск 1\", \"риск 2\", \"риск 3\"],\n  \"opportunities\": [\"възможност 1\", \"възможност 2\"],\n  \"watchlist_impact\": \"Как горните фактори биха повлияли на AI/Tech акции като NBIS, APP, META, CRDO, MU, IREN, HIMS, EOSE, OUST, CRWV\"\n}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.3
+        }
+      },
+      "id": "openai-analysis",
+      "name": "OpenAI Market Brief",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.4,
+      "position": [1120, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "OfK406remqyoMr6C",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse OpenAI response and build final market_brief.json\nconst response = $input.first();\nconst rawContent = response.json.message?.content || response.json.choices?.[0]?.message?.content || '';\n\nlet brief = {};\ntry {\n  // Clean potential markdown code blocks\n  let cleaned = rawContent.trim();\n  if (cleaned.startsWith('```')) {\n    cleaned = cleaned.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '');\n  }\n  brief = JSON.parse(cleaned);\n} catch (e) {\n  console.error('Failed to parse OpenAI JSON:', e.message);\n  brief = {\n    error: 'Failed to parse AI response',\n    raw: rawContent.substring(0, 500),\n    generated_at: new Date().toISOString(),\n    overall_sentiment: 'NEUTRAL',\n    sentiment_score: 0,\n    executive_summary: 'Анализът временно не е наличен. Моля, опитайте отново.',\n    macro: { sentiment: 'NEUTRAL', emoji: '🌍', title: 'Макро & Геополитика', summary: 'Няма данни', key_points: [] },\n    equities: { sentiment: 'NEUTRAL', emoji: '📈', title: 'Акции & Индекси', summary: 'Няма данни', key_points: [], hot_sectors: [] },\n    gold: { sentiment: 'NEUTRAL', emoji: '🥇', title: 'Злато & Суровини', summary: 'Няма данни', key_points: [] },\n    crypto: { sentiment: 'NEUTRAL', emoji: '₿', title: 'Криптовалути', summary: 'Няма данни', key_points: [] },\n    risk_factors: [],\n    opportunities: [],\n    watchlist_impact: 'Няма данни'\n  };\n}\n\nbrief.generated_at = new Date().toISOString();\nbrief.source = 'OpenAI GPT-4o via RSS Feeds';\n\nreturn [{ json: { market_brief: brief, brief_json: JSON.stringify(brief) } }];"
+      },
+      "id": "parse-openai",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://stocks.lexmation.com/api.php?action=save_market_brief",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Lexmation-Secret",
+              "value": "mkt_brief_s3cr3t_2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.brief_json }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "save-to-website",
+      "name": "Save to Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Market brief generated and saved', generated_at: $('Parse AI Response').first().json.market_brief.generated_at }) }}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Prepare RSS Feeds", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare RSS Feeds": {
+      "main": [
+        [{ "node": "Fetch RSS Feed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch RSS Feed": {
+      "main": [
+        [{ "node": "Parse & Aggregate RSS", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse & Aggregate RSS": {
+      "main": [
+        [{ "node": "OpenAI Market Brief", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Market Brief": {
+      "main": [
+        [{ "node": "Parse AI Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [{ "node": "Save to Website", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save to Website": {
+      "main": [
+        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}

@@ -1,0 +1,668 @@
+{
+  "id": "LDB4NhGmcXsOUdn8",
+  "name": "Trade-War Fiverr version",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T08:52:49.646Z",
+  "updatedAt": "2026-09-10T08:53:03.606Z",
+  "isArchived": false,
+  "versionId": "65979c24-6b92-4179-be39-76b4f3bcdf8e",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "c7896c9d-c060-4418-a9bd-10945fd6efad",
+      "name": "Daily Cron (6 AM IST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag",
+          "mode": "list",
+          "cachedResultName": "TradeWar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Subscibers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "4e3e8d02-7184-4c62-bfbb-fef9f3c8e8b8",
+      "name": "Get Subscribers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        288,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const corridors = ['LATAM', 'CIS', 'Africa', 'MENA', 'EU'];\nreturn corridors.map(c => ({ json: { corridor: c } }));"
+      },
+      "id": "c5c79369-5e44-471e-a650-e088076e5f79",
+      "name": "Generate 5 Corridors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e884e1eb-0269-43de-ab70-52fc00a5e62e",
+      "name": "Loop Each Corridor",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        688,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag",
+          "mode": "list",
+          "cachedResultName": "TradeWar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 110727831,
+          "mode": "list",
+          "cachedResultName": "Risk Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJLISsxkLptzJBHoIlTc6qbIGJ7BRzU2EBOK128WPag/edit#gid=110727831"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data": "={{ $now.format('dd-MMM-yyyy') }}",
+            "Corridor": "={{ $json.corridor }}",
+            "Risk Score (1-5)": "={{ $json.risk_score }}",
+            "Headline": "={{ $json.headline }}",
+            "Summary (3 bullets)": "={{ \"\u2022 What happened: \" + $json.summary.what_happened + \"\\n\u2022 Who is affected: \" + $json.summary.who_is_affected + \"\\n\u2022 What to do: \" + $json.summary.action }}",
+            "Alert": "={{ $json.alert_sent }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Corridor",
+              "displayName": "Corridor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk Score (1-5)",
+              "displayName": "Risk Score (1-5)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary (3 bullets)",
+              "displayName": "Summary (3 bullets)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alert",
+              "displayName": "Alert",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e9235f4f-5882-4a63-8592-4cb41b8a0b16",
+      "name": "Write to Google Sheet (Risk Log)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2384,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "score_check",
+              "leftValue": "={{ $('Code in JavaScript').item.json.risk_score }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e995e4c1-fdab-4e53-8106-89a10e45251f",
+      "name": "Is Score 4 or 5?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2976,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are an expert International Trade & Geopolitics Analyst specializing in Indian exports.\n\nYOUR GOAL:\nAnalyze the provided news data for a specific trade corridor and determine the risk level for Indian exporters over the last 24 hours.\n\n=== USER INPUT DATA ===\nTarget Corridor: {{ $('Loop Each Corridor').item.json.corridor }}\nRaw News Search Results: {{ $json.choices[0].message.content }}\n=======================\n\nRULES & CONSTRAINTS:\n1. Output MUST be a single valid JSON object. Do NOT include markdown code blocks (```json) or extra text.\n2. Evaluate risk strictly on a scale from 1 to 5:\n   - 1: No major news or standard operational updates.\n   - 2: Low impact geopolitical noise, minor policy discussions.\n   - 3: Moderate concern (potential regulatory updates, pending tariffs).\n   - 4: High Risk (Emergency quotas, active tariffs, currency restrictions, newly imposed duties).\n   - 5: Critical / Severe (Immediate export/import bans, broad international sanctions, total port blockades).\n3. If the raw news input indicates \"no news\", empty data, or irrelevant information, set risk_score to 1 and headline to \"No major news today\".\n\nREQUIRED JSON OUTPUT FORMAT:\n{\n  \"risk_score\": 4,\n  \"headline\": \"One-line executive summary of the main event (max 12 words)\",\n  \"summary\": {\n    \"what_happened\": \"Clear, concise sentence on what policy or restriction occurred.\",\n    \"who_is_affected\": \"Specific Indian exporter sector and corridor affected.\",\n    \"action\": \"Immediate recommended action for the Indian exporter (e.g., book LCs, hold shipments).\"\n  },\n  \"sources_used\": [\"List of authoritative sources cited in the input, e.g. Reuters, DGFT\"]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "parallelToolCalls": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "e3c05b57-7dd4-4130-b3eb-540f57b1af7c",
+      "name": "Analyst",
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are the Chief Risk Validator & AI Critic. Your job is to audit and validate the analysis generated by the Analyst AI.\n\nYOUR GOAL:\nVerify if the Analyst's risk_score, headline, and summary are factual, non-hallucinated, and accurately reflect the real impact on Indian exports based strictly on the raw news provided.\n\n=== USER INPUT DATA TO AUDIT ===\nTarget Corridor: {{ $('Loop Each Corridor').item.json.corridor }}\n\nOriginal Raw News Data:\n{{ $('Perplexity').item.json.choices[0].message.content }}\n\nAnalyst AI Output to Audit:\n{{ $json.output[0].content[0].text }}\n================================\n\nCRITIC AUDIT CHECKS:\n1. Relevance Check: Is the news actually about Indian exports and the specified corridor?\n2. Source Verification: Is the news backed by reliable entities (DGFT, WTO, Reuters, USTR, etc.)?\n3. Score Calibration: Is the 1-5 score justified? (Lower over-exaggerated scores; raise under-reported immediate risks).\n\nRULES & CONSTRAINTS:\n1. Output MUST be a single valid JSON object with NO extra text or markdown code blocks.\n2. If you modify the Analyst's score or summary, provide updated values and brief reasoning in \"critic_notes\".\n\nREQUIRED JSON OUTPUT FORMAT:\n{\n  \"risk_score\": 4,\n  \"headline\": \"Validated or corrected headline\",\n  \"summary\": {\n    \"what_happened\": \"Validated or corrected sentence on what occurred\",\n    \"who_is_affected\": \"Validated or corrected sentence on who is affected\",\n    \"action\": \"Validated or corrected action\"\n  },\n  \"is_validated\": true,\n  \"critic_notes\": \"Brief note on why the score was kept or adjusted.\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "parallelToolCalls": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1424,
+        192
+      ],
+      "id": "8e7ba808-7301-4f32-b21b-e2f8247e691a",
+      "name": "Crytic",
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Search for any trade war news, tariffs, sanctions, export/import bans, quotas, duties, or trade restrictions affecting Indian exports to the {{ $('Loop Each Corridor').item.json.corridor }} corridor in the last 24 hours. Prioritize official and authoritative sources like DGFT, WTO, European Commission, USTR, UK Government, Trade.gov, and Reuters. Provide a clear, factual summary of any developments, including affected sectors and cited sources."
+            }
+          ]
+        },
+        "options": {
+          "searchRecency": "day"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 2,
+      "position": [
+        928,
+        224
+      ],
+      "id": "3ac5b7af-88ff-469c-8606-d53b575d7aa8",
+      "name": "Perplexity",
+      "credentials": {
+        "perplexityApi": {
+          "id": "D0LsQI2RGEfyzsKn",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cleanText = $input.first().json.output[0].content[0].text\nconst parsedData = JSON.parse(cleanText);\n\nreturn {\n  json: {\n    corridor: $('Loop Each Corridor').item.json.corridor,\n    risk_score: parsedData.risk_score,\n    headline: parsedData.headline,\n    summary: parsedData.summary,\n    sources_used: parsedData.sources_used,\n    alert_sent: parsedData.risk_score >= 4\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        192
+      ],
+      "id": "8f62a5fc-470a-4cff-bfe3-e019904c646b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.pickyassist.com/api/v2/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "=application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"3a3f8eca7dcbfc67593e928c62a37699d1a907e9\",\n  \"application\": 121,\n  \"template_name\": \"trade_alert_notification\",\n  \"data\": [\n    {\n      \"number\": \"359886057528\",\n      \"language\": \"en\",\n      \"template_message\": [\n        \"={{ $json.corridor }}\",\n        \"={{ $('Code in JavaScript').item.json.risk_score }}\",\n        \"={{ $('Code in JavaScript').item.json.headline }}\",\n        \"={{ $('Code in JavaScript').item.json.summary.who_is_affected }}\",\n        \"={{ $('Code in JavaScript').item.json.summary.action }}\"\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "1aa29118-19d0-4e7f-82be-ff28f92c6dde",
+      "name": "Send Picky Assist WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3280,
+        176
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. \u0412\u0437\u0435\u043c\u0430\u043c\u0435 \u0432\u0441\u0438\u0447\u043a\u0438 \u0430\u0431\u043e\u043d\u0430\u0442\u0438 \u043e\u0442 \u043d\u043e\u0434\u0430 Get Subscribers\nconst allSubscribersItems = $('Get Subscribers').all();\nconst allSubscribers = allSubscribersItems.map(item => item.json);\n\n// 2. \u0412\u0437\u0435\u043c\u0430\u043c\u0435 \u0442\u0435\u043a\u0443\u0449\u0438\u044f \u043a\u043e\u0440\u0438\u0434\u043e\u0440\nconst currentCorridor = $('Loop Each Corridor').item.json.corridor;\nconst auditedData = $json;\n\n// Helper \u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0437\u0430 \u043d\u0430\u043c\u0438\u0440\u0430\u043d\u0435 \u043d\u0430 \u0441\u0442\u043e\u0439\u043d\u043e\u0441\u0442 \u0432 \u043e\u0431\u0435\u043a\u0442 \u0431\u0435\u0437 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u043e\u0442 \u0433\u043b\u0430\u0432\u043d\u0438/\u043c\u0430\u043b\u043a\u0438 \u0431\u0443\u043a\u0432\u0438 \u0432 \u0438\u043c\u0435\u0442\u043e \u043d\u0430 \u043a\u043e\u043b\u043e\u043d\u0430\u0442\u0430\nfunction getColumnValue(obj, possibleNames) {\n  const keys = Object.keys(obj);\n  for (let name of possibleNames) {\n    const foundKey = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());\n    if (foundKey && obj[foundKey] !== undefined) {\n      return obj[foundKey];\n    }\n  }\n  return '';\n}\n\n// 3. \u0424\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u043c\u0435 \u0430\u0431\u043e\u043d\u0430\u0442\u0438\u0442\u0435\nconst matchedSubscribers = allSubscribers.filter(sub => {\n  // \u0422\u044a\u0440\u0441\u0438\u043c \u043a\u043e\u043b\u043e\u043d\u0430\u0442\u0430 \u0437\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442 (Active?, Active, Status)\n  const activeVal = String(getColumnValue(sub, ['Active?', 'Active', 'Status'])).trim().toLowerCase();\n  const isActive = activeVal === 'yes' || activeVal === 'true' || activeVal === '1';\n\n  // \u0422\u044a\u0440\u0441\u0438\u043c \u043a\u043e\u043b\u043e\u043d\u0430\u0442\u0430 \u0437\u0430 \u043a\u043e\u0440\u0438\u0434\u043e\u0440\u0438\u0442\u0435\n  const corridorsRaw = String(getColumnValue(sub, [\n    'Corridors (comma separated)', \n    'Corridors', \n    'Corridor', \n    'Corridors '\n  ]));\n\n  // \u0420\u0430\u0437\u0434\u0435\u043b\u044f\u043c\u0435 \u043f\u043e \u0437\u0430\u043f\u0435\u0442\u0430\u044f \u0438 \u043f\u043e\u0447\u0438\u0441\u0442\u0432\u0430\u043c\u0435 \u0440\u0430\u0437\u0441\u0442\u043e\u044f\u043d\u0438\u044f\u0442\u0430\n  const subscriberCorridors = corridorsRaw\n    .split(',')\n    .map(c => c.trim().toUpperCase());\n\n  const targetCorridor = String(currentCorridor).trim().toUpperCase();\n\n  return isActive && subscriberCorridors.includes(targetCorridor);\n});\n\n// 4. \u0410\u043a\u043e \u041d\u042f\u041c\u0410 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0438 \u0430\u0431\u043e\u043d\u0430\u0442\u0438\nif (matchedSubscribers.length === 0) {\n  return [{\n    json: {\n      no_subscribers_found: true,\n      corridor: currentCorridor,\n      message: \"No active subscribers found for this corridor\"\n    }\n  }];\n}\n\n// 5. \u0412\u0440\u044a\u0449\u0430\u043c\u0435 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0438\u0442\u0435 \u0430\u0431\u043e\u043d\u0430\u0442\u0438\nreturn matchedSubscribers.map(sub => {\n  const phone = getColumnValue(sub, ['WhatsApp Number', 'Phone', 'Number', 'Mobile']);\n  const name = getColumnValue(sub, ['Exporter Name', 'Name', 'Exporter']);\n\n  return {\n    json: {\n      no_subscribers_found: false,\n      phone_number: phone,\n      exporter_name: name,\n      corridor: currentCorridor,\n      risk_score: auditedData.risk_score || auditedData.json?.risk_score,\n      headline: auditedData.headline || auditedData.json?.headline,\n      summary: auditedData.summary || auditedData.json?.summary\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        192
+      ],
+      "id": "a083a5a7-4fcd-4627-ba5d-d182c515c1df",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "tableId": "risk_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "corridor",
+              "fieldValue": "={{ $json.corridor }}"
+            },
+            {
+              "fieldId": "risk_score",
+              "fieldValue": "={{ $json.risk_score }}"
+            },
+            {
+              "fieldId": "headline",
+              "fieldValue": "={{ $json.headline }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "alert_sent",
+              "fieldValue": "={{ $json.alert_sent }}"
+            },
+            {
+              "fieldId": "analyst_result",
+              "fieldValue": "={{ $('Analyst').item.json.output[0].content[0].text }}"
+            },
+            {
+              "fieldId": "critic_result",
+              "fieldValue": "={{ $('Crytic').item.json.output[0].content[0].text }}"
+            },
+            {
+              "fieldId": "raw_news_data",
+              "fieldValue": "={{ $('Perplexity').item.json.choices[0].message.content }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        192
+      ],
+      "id": "77272b6e-0978-49f3-be05-1c4e3ae3bafd",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "mDPDKggtSOVqimxi",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 4. SUBSCRIBER MATCHING & ALERT DELIVERY\n\u2022 **Subscriber Matcher:** Filters active subscribers opted into the current corridor.\n\u2022 **Risk Threshold:** Checks if risk score >= 4 (High / Critical Alert).\n\u2022 **WhatsApp Dispatch:** Sends automated high-priority push notifications via Picky Assist API.\n\u2022 **Loop Reset:** Cycles back to the next corridor batch.",
+        "height": 528,
+        "width": 784,
+        "color": "#00C950"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2736,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "54aab102-b33f-47b2-a5cd-5a32f710323c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### 3. AUDIT TRAIL & LOGGING\n\u2022 **Supabase DB:** Saves full diagnostic trace (raw news, analyst draft, critic notes).\n\u2022 **Google Sheets Log:** Appends human-readable daily summary and alert flags to `Risk Log`.",
+        "height": 528,
+        "width": 720,
+        "color": "#9E9900"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1984,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "31cde50f-a858-48bd-9c07-c3aee93f6a27",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### 2. MULTI-AGENT AI ANALYSIS ENGINE\n\u2022 **Perplexity (Search):** Fetches real-time trade news & regulatory updates (past 24h).\n\u2022 **Analyst Agent:** Evaluates data and outputs structured JSON with risk score (1-5).\n\u2022 **Critic Agent:** Cross-examines and audits Analyst scores to prevent hallucinations.\n\u2022 **JSON Parser:** Cleans and formats validated output for system logging.",
+        "height": 528,
+        "width": 1024,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        896,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "3212eafa-911f-4a81-a55b-577916a83263",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "#### 1. DATA INITIALIZATION & CONTROL\n\u2022 **Cron Trigger:** Fires daily at 6:00 AM IST.\n\u2022 **Subscriber Fetch:** Pulls active subscriber list from Google Sheets.\n\u2022 **Corridor Split:** Defines the 5 target trade corridors (LATAM, CIS, Africa, MENA, EU) and loops through them sequentially.",
+        "height": 528,
+        "width": 848
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "a7ec32d2-15d8-493e-a866-4137af0b1623",
+      "name": "Sticky Note"
+    }
+  ],
+  "connections": {
+    "Daily Cron (6 AM IST)": {
+      "main": [
+        [
+          {
+            "node": "Get Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Generate 5 Corridors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate 5 Corridors": {
+      "main": [
+        [
+          {
+            "node": "Loop Each Corridor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Each Corridor": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write to Google Sheet (Risk Log)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Score 4 or 5?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Picky Assist WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyst": {
+      "main": [
+        [
+          {
+            "node": "Crytic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crytic": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Picky Assist WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Loop Each Corridor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Is Score 4 or 5?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Write to Google Sheet (Risk Log)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "LDB4NhGmcXsOUdn8",
+      "projectId": "2aqhqfpnie4eg81l",
+      "project": {
+        "id": "2aqhqfpnie4eg81l",
+        "name": "Lexmation EOOD <lex.mation2026@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-06-23T11:05:36.196Z",
+        "updatedAt": "2026-06-24T17:09:53.950Z"
+      },
+      "createdAt": "2026-09-10T08:52:49.650Z",
+      "updatedAt": "2026-09-10T08:52:49.650Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,2361 @@
+{
+  "id": "Pwh5dGkS9VCUECF5",
+  "name": "Stock Multi-Timeframe & News Intelligence Alerter",
+  "description": null,
+  "active": true,
+  "activeVersionId": "1b082914-5536-4789-afab-05ab3c63c964",
+  "createdAt": "2026-08-27T14:57:39.468Z",
+  "updatedAt": "2026-09-25T09:06:08.266Z",
+  "isArchived": false,
+  "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
+  "versionCounter": 200,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "d558f29f-c665-49b9-9a31-0faf67611bdb",
+      "name": "Loop Over Tickers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -864,
+        160
+      ],
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "id": "c4946a2d-ba70-44df-abfa-3ab5042d899f",
+      "name": "Parse Structured JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        80
+      ],
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nlet raw = '';\nif (item.content?.[0]?.text) {\n  raw = item.content[0].text;\n} else if (Array.isArray(item) && item[0]?.content?.[0]?.text) {\n  raw = item[0].content[0].text;\n} else if (item.output?.[0]?.content?.[0]?.text) {\n  raw = item.output[0].content[0].text;\n} else if (typeof item.output === 'string') {\n  raw = item.output;\n} else if (typeof item.text === 'string') {\n  raw = item.text;\n} else {\n  raw = JSON.stringify(item);\n}\n\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (match) raw = match[0];\n\ntry {\n  let parsed = JSON.parse(raw);\n  if (parsed.content?.[0]?.text) {\n    let inner = parsed.content[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();\n    const innerMatch = inner.match(/\\{[\\s\\S]*\\}/);\n    if (innerMatch) inner = innerMatch[0];\n    parsed = JSON.parse(inner);\n  }\n\n  return [{\n    json: {\n      Date_Time: parsed.Date_Time || parsed.date_time || new Date().toISOString().replace('T', ' ').substring(0, 19),\n      Ticker: parsed.Ticker || parsed.ticker || 'NBIS',\n      Verdict: parsed.Verdict || parsed.verdict || 'WATCH',\n      Confidence: parsed.Confidence || parsed.confidence || '0%',\n      Current_Price: parsed.Current_Price || parsed.current_price || '0',\n      RVOL: parsed.RVOL || parsed.rvol || '1.0x',\n      Market_Trend: parsed.Market_Trend || parsed.market_trend || 'Neutral',\n      Entry_Trigger: parsed.Entry_Trigger || parsed.entry_trigger || '',\n      Stop_Loss: parsed.Stop_Loss || parsed.stop_loss || '0',\n      Target_Price: parsed.Target_Price || parsed.target_price || '0',\n      Risk_Reward: parsed.Risk_Reward || parsed.risk_reward || '',\n      Catalyst_Headline: parsed.Catalyst_Headline || parsed.catalyst_headline || '',\n      Telegram_Report: raw,\n      Outcome: parsed.Outcome || parsed.outcome || 'Pending',\n      Realized_PnL: ''\n    }\n  }];\n} catch (e) {\n  return [{\n    json: {\n      Date_Time: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      Ticker: 'NBIS',\n      Verdict: 'PARSE_ERROR',\n      Confidence: '0%',\n      Current_Price: '0',\n      RVOL: '0x',\n      Market_Trend: 'Error',\n      Entry_Trigger: '',\n      Stop_Loss: '0',\n      Target_Price: '0',\n      Risk_Reward: '',\n      Catalyst_Headline: '',\n      Telegram_Report: raw,\n      Outcome: 'ERROR',\n      Realized_PnL: ''\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "eaedf483-9c48-4483-a44d-4bff05cdba5d",
+      "name": "Append to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1232,
+        304
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+          "mode": "list",
+          "cachedResultName": "Trade_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date_Time": "={{ $json.Date_Time }}",
+            "Ticker": "={{ $json.Ticker }}",
+            "Verdict": "={{ $json.Verdict }}",
+            "Confidence": "={{ $json.Confidence }}",
+            "Current_Price": "={{ $json.Current_Price }}",
+            "Entry_Trigger": "={{ $json.Entry_Trigger }}",
+            "Stop_Loss": "={{ $json.Stop_Loss }}",
+            "Target_Price": "={{ $json.Target_Price }}",
+            "Risk_Reward": "={{ $json.Risk_Reward }}",
+            "Catalyst_Headline": "={{ $json.Catalyst_Headline }}",
+            "Outcome": "={{ $json.Outcome }}",
+            "RVOL": "={{ $json.RVOL }}",
+            "Market Trend": "={{ $json.Market_Trend }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date_Time",
+              "displayName": "Date_Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ticker",
+              "displayName": "Ticker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Verdict",
+              "displayName": "Verdict",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Current_Price",
+              "displayName": "Current_Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Entry_Trigger",
+              "displayName": "Entry_Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Stop_Loss",
+              "displayName": "Stop_Loss",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Target_Price",
+              "displayName": "Target_Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk_Reward",
+              "displayName": "Risk_Reward",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Catalyst_Headline",
+              "displayName": "Catalyst_Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Outcome",
+              "displayName": "Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Realsied_PnL",
+              "displayName": "Realsied_PnL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "RVOL",
+              "displayName": "RVOL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Market Trend",
+              "displayName": "Market Trend",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YKLDfEamB8A53Kro",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "476c4ea6-cc02-4d50-805e-4d8da98b99a4",
+      "name": "Send Telegram Alert",
+      "webhookId": "714650d2-f75f-4596-90be-a8424620fbd3",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1104,
+        -96
+      ],
+      "parameters": {
+        "chatId": "8643751612",
+        "text": "=\ud83d\udea8 <b>STOCK ALERT: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }} (Confidence: {{ $json.Confidence }})\n\ud83d\udcb5 <b>Price:</b> {{ $json.Current_Price }}\n\ud83d\ude80 <b>Entry Trigger:</b> {{ $json.Entry_Trigger }}\n\n\ud83d\uded1 <b>Stop Loss:</b> {{ $json.Stop_Loss }}\n\ud83c\udfaf <b>Target:</b> {{ $json.Target_Price }}\n\u2696\ufe0f <b>Risk / Reward:</b> {{ $json.Risk_Reward }}\n\n\ud83d\udcf0 <b>Catalyst:</b>\n{{ $json.Catalyst_Headline }}\n\n\u23f1 <i>{{ $json.Date_Time }}</i>",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "XpsxJBZxAWu4uQK0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "dd38c827-5fcc-4b53-89e2-36d63571ea4d",
+      "name": "Message a model",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        448
+      ],
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=You are a professional financial news screener and catalyst analyst. Your job is to find breaking news, SEC filings, earnings reports, analyst upgrades/downgrades, and sector-moving catalysts strictly from the last 24 hours. Be concise, factual, and eliminate market noise. Find and summarize all major news, SEC filings (Form 4, 8-K, 10-Q), institutional order flow, or analyst rating changes for stock ticker {{ $json.message.text }} published in the last 24 hours.\\n\\nStructure your response as follows:\\n1. Main Catalyst (1-2 sentences summarizing the most critical event, or 'No major catalyst' if none).\\n2. Key Details (3 short bullet points covering facts, numbers, or guidance).\\n3. Market Sentiment (Bullish, Bearish, or Neutral based strictly on the news)."
+            }
+          ]
+        },
+        "options": {
+          "searchAfterDate": "={{ $now.minus({ hours: 24 }).toFormat('MM/dd/yyyy') }}"
+        },
+        "requestOptions": {}
+      },
+      "credentials": {
+        "perplexityApi": {
+          "id": "D0LsQI2RGEfyzsKn",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "id": "e17def85-c714-4d0d-b17d-00bbacebdbb3",
+      "name": "Analyst",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        96
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-3.8-flash-low",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Telegram Stock Request Trigger').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\nANALYTICAL & RISK RULES:\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Stop Loss must provide breathing room against normal intraday market noise and liquidity sweeps: place it between 1.5% and 2.5% below entry for Longs (or above entry for Shorts), anchored to 15m/1h structural support or 1.5x-2x ATR. NEVER place tight stops on 5m wicks (e.g. < 1.0%), as this causes premature stop-outs from market noise. Minimum Risk/Reward (R:R) must strictly remain 1:2.0 or higher, with Target Price scaling accordingly (giving at least 2x the Stop Loss distance, e.g. 3.0% to 5.0%+ gain) and aligning with key daily/weekly resistance or liquidity pools.\n   - Target Price must align with daily/weekly key liquidity pools.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Telegram Stock Request Trigger').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "parallelToolCalls": false
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "id": "bea186a8-91ad-4b82-aca9-3f0647aebc85",
+      "name": "Merge Multi-Timeframe Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -32,
+        64
+      ],
+      "parameters": {
+        "numberInputs": 3
+      }
+    },
+    {
+      "id": "a750f9fd-95cd-4ef6-b81a-f76a38ee8668",
+      "name": "Merge Technical and News Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        96
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "1b7ac7f4-6fe3-4597-8984-b6e30a940244",
+      "name": "Final AI Context Builder",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        432,
+        96
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      }
+    },
+    {
+      "id": "22515e87-82c2-4a00-b4c1-749785e3daab",
+      "name": "Fetch 5M Market Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -480,
+        -176
+      ],
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "interval",
+              "value": "5min"
+            },
+            {
+              "name": "outputsize",
+              "value": "30"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "rW4ms4hNszUgLoK2",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "id": "f9299c40-ccf1-4f3c-a32c-b29fdeba9922",
+      "name": "Fetch 15M Market Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -480,
+        32
+      ],
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "interval",
+              "value": "15min"
+            },
+            {
+              "name": "outputsize",
+              "value": "30"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "rW4ms4hNszUgLoK2",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "id": "e828e764-55db-4392-8a00-23cd56760faf",
+      "name": "Fetch Daily Context Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -480,
+        240
+      ],
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=symbol",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "interval",
+              "value": "1day"
+            },
+            {
+              "name": "outputsize",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "rW4ms4hNszUgLoK2",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "id": "4ec414ff-1232-4ee8-b3ce-61aa6cf8d7cb",
+      "name": "Telegram Stock Request Trigger",
+      "webhookId": "4ac3631f-6a4a-4cfc-b1de-7c6bb29db82d",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1136,
+        160
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "XpsxJBZxAWu4uQK0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "9448d998-33b3-4abc-8b22-acc9407414cf",
+      "name": "Market Close (23:30 Mon-Fri)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        768
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 23 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3dc1dab8-9c9d-4c51-bd94-4664ad0828bb",
+      "name": "Read Trades from Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -304,
+        768
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+          "mode": "list",
+          "cachedResultName": "Trade_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Outcome",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {
+          "outputRowNumber": true
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YKLDfEamB8A53Kro",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "1976ce4b-0a0e-4ef2-932c-487d58b2a1ad",
+      "name": "Filter Pending Trades",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        768
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst pendingTrades = [];\n\n// \u0414\u0430\u0442\u0430 \u043e\u0442\u043f\u0440\u0435\u0434\u0438 2 \u0434\u043d\u0438 (48 \u0447\u0430\u0441\u0430) \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 YYYY-MM-DD\nconst twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));\nconst cutoffDateStr = twoDaysAgo.toISOString().substring(0, 10);\n\nitems.forEach((item, index) => {\n  const row = item.json;\n  \n  // \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u043c\u0435 Outcome \u043d\u0430\u043f\u044a\u043b\u043d\u043e \u043d\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e \u043e\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u044a\u0440\u0430 (Pending, pending, PENDING)\n  const outcome = String(row.Outcome || \"\").trim().toLowerCase();\n  \n  if (outcome === \"pending\" || outcome === \"\") {\n    // \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u0434\u0430\u0442\u0430\u0442\u0430 YYYY-MM-DD \u043e\u0442 Date_Time\n    const dateStr = String(row.Date_Time || \"\").trim().substring(0, 10);\n    \n    // \u0421\u0440\u0430\u0432\u043d\u044f\u0432\u0430\u043c\u0435 \u0434\u0438\u0440\u0435\u043a\u0442\u043d\u043e \u0434\u0430\u0442\u0430\u0442\u0430 (\u0430\u043a\u043e \u0435 \u0434\u043d\u0435\u0441, \u0432\u0447\u0435\u0440\u0430 \u0438\u043b\u0438 \u0437\u0430\u0432\u0447\u0435\u0440\u0430)\n    const isRecent = !dateStr || dateStr >= cutoffDateStr;\n    \n    if (isRecent) {\n      pendingTrades.push({\n        json: {\n          ...row,\n          row_number: row.row_number || (index + 2)\n        }\n      });\n    }\n  }\n});\n\nreturn pendingTrades;"
+      }
+    },
+    {
+      "id": "2572c64a-9420-44e9-b6c7-37062ea5e359",
+      "name": "Loop Pending Trades",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        144,
+        768
+      ],
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "id": "08e188fa-99bf-4c00-9129-72954058c63c",
+      "name": "Evaluate Outcome Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        768
+      ],
+      "parameters": {
+        "jsCode": "const trade = $('Loop Pending Trades').item.json;\nconst candleData = $input.first().json.values?.[0] || {};\n\nconst high = parseFloat(candleData.high || 0);\nconst low = parseFloat(candleData.low || 0);\nconst close = parseFloat(candleData.close || 0);\n\nconst target = parseFloat(String(trade.Target_Price).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst stop = parseFloat(String(trade.Stop_Loss).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst entry = parseFloat(String(trade.Current_Price).replace(/[^0-9.-]+/g, \"\")) || close;\nconst verdict = (trade.Verdict || \"\").toUpperCase().trim();\nconst rrStr = trade.Risk_Reward ? \"+\" + String(trade.Risk_Reward).replace(\"1:\", \"\").trim() + \"R\" : \"+2.0R\";\n\nlet outcome = \"OPEN / EXPIRED\";\nlet pnl = \"0.0R\";\nlet exitPrice = close;\n\nif (verdict === \"BUY\") {\n  if (high >= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (low <= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (close - entry) / (entry - stop || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"SELL\" || verdict === \"SHORT\") {\n  if (low <= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (high >= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (entry - close) / (stop - entry || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"WATCH\") {\n  const isBullish = target > entry || target > stop;\n  if (isBullish) {\n    if (high >= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (low <= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakout)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  } else {\n    if (low <= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (high >= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakdown)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  }\n}\n\nreturn {\n  json: {\n    row_number: trade.row_number,\n    Date_Time: trade.Date_Time,\n    Ticker: trade.Ticker,\n    Verdict: trade.Verdict,\n    Outcome: outcome,\n    Exit_Price: exitPrice.toFixed(2),\n    Realized_PnL: pnl,\n    Daily_High: high,\n    Daily_Low: low,\n    Daily_Close: close\n  }\n};"
+      }
+    },
+    {
+      "id": "b4064cbd-2ac8-4bc7-8ce1-0e88066d160e",
+      "name": "Send EOD Telegram Report",
+      "webhookId": "8a373f9f-4d6c-4cab-83f1-32da5974e896",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        864
+      ],
+      "parameters": {
+        "chatId": "8643751612",
+        "text": "=\ud83d\udcca <b>EOD TRADE OUTCOME: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }}\n\ud83c\udfc1 <b>Outcome:</b> {{ $json.Outcome }}\n\ud83d\udcb0 <b>PnL:</b> <code>{{ $json.Realized_PnL }}</code>\n\ud83d\udcb5 <b>Exit / Close:</b> ${{ $json.Exit_Price }}\n\n\ud83d\udcc8 <b>Day Range:</b> Low ${{ $json.Daily_Low }} \u2014 High ${{ $json.Daily_High }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "XpsxJBZxAWu4uQK0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "c972d814-6b57-4991-a60d-549d7875ebca",
+      "name": "Fetch EOD Daily Candle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        768
+      ],
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.Ticker }}"
+            },
+            {
+              "name": "interval",
+              "value": "1day"
+            },
+            {
+              "name": "outputsize",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "rW4ms4hNszUgLoK2",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "id": "ec82fa31-87de-4b08-b3a5-765527151aad",
+      "name": "Update Outcome in Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        784,
+        640
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+          "mode": "list",
+          "cachedResultName": "Trade_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Outcome": "={{ $json.Outcome }}",
+            "Realsied_PnL": "={{ $json.Realized_PnL }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Date_Time",
+              "displayName": "Date_Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticker",
+              "displayName": "Ticker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Verdict",
+              "displayName": "Verdict",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Current_Price",
+              "displayName": "Current_Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Entry_Trigger",
+              "displayName": "Entry_Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stop_Loss",
+              "displayName": "Stop_Loss",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Target_Price",
+              "displayName": "Target_Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk_Reward",
+              "displayName": "Risk_Reward",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Catalyst_Headline",
+              "displayName": "Catalyst_Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outcome",
+              "displayName": "Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Realsied_PnL",
+              "displayName": "Realsied_PnL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RVOL",
+              "displayName": "RVOL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Market Trend",
+              "displayName": "Market Trend",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YKLDfEamB8A53Kro",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "7a3f8921-b452-4720-92de-syncwebsite01",
+      "name": "Sync Website Terminal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1392,
+        -96
+      ],
+      "parameters": {
+        "url": "https://stocks.lexmation.com/api.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "sync"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Loop Over Tickers": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Daily Context Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch 15M Market Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch 5M Market Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Structured JSON": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Merge Technical and News Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Analyst": {
+      "main": [
+        [
+          {
+            "node": "Parse Structured JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Multi-Timeframe Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Technical and News Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Technical and News Data": {
+      "main": [
+        [
+          {
+            "node": "Final AI Context Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final AI Context Builder": {
+      "main": [
+        [
+          {
+            "node": "Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch 5M Market Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Multi-Timeframe Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch 15M Market Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Multi-Timeframe Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Context Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Multi-Timeframe Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Telegram Stock Request Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Market Close (23:30 Mon-Fri)": {
+      "main": [
+        [
+          {
+            "node": "Read Trades from Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Trades from Sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter Pending Trades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Pending Trades": {
+      "main": [
+        [
+          {
+            "node": "Loop Pending Trades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Pending Trades": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fetch EOD Daily Candle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Outcome Logic": {
+      "main": [
+        [
+          {
+            "node": "Send EOD Telegram Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Outcome in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch EOD Daily Candle": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Outcome Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Outcome in Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Pending Trades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Alert": {
+      "main": [
+        [
+          {
+            "node": "Sync Website Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send EOD Telegram Report": {
+      "main": [
+        [
+          {
+            "node": "Sync Website Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:Market Close (23:30 Mon-Fri)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Pwh5dGkS9VCUECF5",
+      "projectId": "2aqhqfpnie4eg81l",
+      "project": {
+        "id": "2aqhqfpnie4eg81l",
+        "name": "Lexmation EOOD <lex.mation2026@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-06-23T11:05:36.196Z",
+        "updatedAt": "2026-06-24T17:09:53.950Z"
+      },
+      "createdAt": "2026-08-27T14:57:39.472Z",
+      "updatedAt": "2026-08-27T14:57:39.472Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
+    "workflowId": "Pwh5dGkS9VCUECF5",
+    "nodes": [
+      {
+        "id": "d558f29f-c665-49b9-9a31-0faf67611bdb",
+        "name": "Loop Over Tickers",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -864,
+          160
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "id": "c4946a2d-ba70-44df-abfa-3ab5042d899f",
+        "name": "Parse Structured JSON",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          80
+        ],
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\n\nlet raw = '';\nif (item.content?.[0]?.text) {\n  raw = item.content[0].text;\n} else if (Array.isArray(item) && item[0]?.content?.[0]?.text) {\n  raw = item[0].content[0].text;\n} else if (item.output?.[0]?.content?.[0]?.text) {\n  raw = item.output[0].content[0].text;\n} else if (typeof item.output === 'string') {\n  raw = item.output;\n} else if (typeof item.text === 'string') {\n  raw = item.text;\n} else {\n  raw = JSON.stringify(item);\n}\n\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (match) raw = match[0];\n\ntry {\n  let parsed = JSON.parse(raw);\n  if (parsed.content?.[0]?.text) {\n    let inner = parsed.content[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();\n    const innerMatch = inner.match(/\\{[\\s\\S]*\\}/);\n    if (innerMatch) inner = innerMatch[0];\n    parsed = JSON.parse(inner);\n  }\n\n  return [{\n    json: {\n      Date_Time: parsed.Date_Time || parsed.date_time || new Date().toISOString().replace('T', ' ').substring(0, 19),\n      Ticker: parsed.Ticker || parsed.ticker || 'NBIS',\n      Verdict: parsed.Verdict || parsed.verdict || 'WATCH',\n      Confidence: parsed.Confidence || parsed.confidence || '0%',\n      Current_Price: parsed.Current_Price || parsed.current_price || '0',\n      RVOL: parsed.RVOL || parsed.rvol || '1.0x',\n      Market_Trend: parsed.Market_Trend || parsed.market_trend || 'Neutral',\n      Entry_Trigger: parsed.Entry_Trigger || parsed.entry_trigger || '',\n      Stop_Loss: parsed.Stop_Loss || parsed.stop_loss || '0',\n      Target_Price: parsed.Target_Price || parsed.target_price || '0',\n      Risk_Reward: parsed.Risk_Reward || parsed.risk_reward || '',\n      Catalyst_Headline: parsed.Catalyst_Headline || parsed.catalyst_headline || '',\n      Telegram_Report: raw,\n      Outcome: parsed.Outcome || parsed.outcome || 'Pending',\n      Realized_PnL: ''\n    }\n  }];\n} catch (e) {\n  return [{\n    json: {\n      Date_Time: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      Ticker: 'NBIS',\n      Verdict: 'PARSE_ERROR',\n      Confidence: '0%',\n      Current_Price: '0',\n      RVOL: '0x',\n      Market_Trend: 'Error',\n      Entry_Trigger: '',\n      Stop_Loss: '0',\n      Target_Price: '0',\n      Risk_Reward: '',\n      Catalyst_Headline: '',\n      Telegram_Report: raw,\n      Outcome: 'ERROR',\n      Realized_PnL: ''\n    }\n  }];\n}"
+        }
+      },
+      {
+        "id": "eaedf483-9c48-4483-a44d-4bff05cdba5d",
+        "name": "Append to Google Sheets",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          1232,
+          304
+        ],
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+            "mode": "list",
+            "cachedResultName": "Trade_Log",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Date_Time": "={{ $json.Date_Time }}",
+              "Ticker": "={{ $json.Ticker }}",
+              "Verdict": "={{ $json.Verdict }}",
+              "Confidence": "={{ $json.Confidence }}",
+              "Current_Price": "={{ $json.Current_Price }}",
+              "Entry_Trigger": "={{ $json.Entry_Trigger }}",
+              "Stop_Loss": "={{ $json.Stop_Loss }}",
+              "Target_Price": "={{ $json.Target_Price }}",
+              "Risk_Reward": "={{ $json.Risk_Reward }}",
+              "Catalyst_Headline": "={{ $json.Catalyst_Headline }}",
+              "Outcome": "={{ $json.Outcome }}",
+              "RVOL": "={{ $json.RVOL }}",
+              "Market Trend": "={{ $json.Market_Trend }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "Date_Time",
+                "displayName": "Date_Time",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Ticker",
+                "displayName": "Ticker",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Verdict",
+                "displayName": "Verdict",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Confidence",
+                "displayName": "Confidence",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Current_Price",
+                "displayName": "Current_Price",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Entry_Trigger",
+                "displayName": "Entry_Trigger",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Stop_Loss",
+                "displayName": "Stop_Loss",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Target_Price",
+                "displayName": "Target_Price",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Risk_Reward",
+                "displayName": "Risk_Reward",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Catalyst_Headline",
+                "displayName": "Catalyst_Headline",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Outcome",
+                "displayName": "Outcome",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Realsied_PnL",
+                "displayName": "Realsied_PnL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Notes",
+                "displayName": "Notes",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "RVOL",
+                "displayName": "RVOL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "Market Trend",
+                "displayName": "Market Trend",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YKLDfEamB8A53Kro",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "476c4ea6-cc02-4d50-805e-4d8da98b99a4",
+        "name": "Send Telegram Alert",
+        "webhookId": "714650d2-f75f-4596-90be-a8424620fbd3",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1104,
+          -96
+        ],
+        "parameters": {
+          "chatId": "8643751612",
+          "text": "=\ud83d\udea8 <b>STOCK ALERT: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }} (Confidence: {{ $json.Confidence }})\n\ud83d\udcb5 <b>Price:</b> {{ $json.Current_Price }}\n\ud83d\ude80 <b>Entry Trigger:</b> {{ $json.Entry_Trigger }}\n\n\ud83d\uded1 <b>Stop Loss:</b> {{ $json.Stop_Loss }}\n\ud83c\udfaf <b>Target:</b> {{ $json.Target_Price }}\n\u2696\ufe0f <b>Risk / Reward:</b> {{ $json.Risk_Reward }}\n\n\ud83d\udcf0 <b>Catalyst:</b>\n{{ $json.Catalyst_Headline }}\n\n\u23f1 <i>{{ $json.Date_Time }}</i>",
+          "additionalFields": {
+            "parse_mode": "HTML"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "XpsxJBZxAWu4uQK0",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "id": "dd38c827-5fcc-4b53-89e2-36d63571ea4d",
+        "name": "Message a model",
+        "type": "n8n-nodes-base.perplexity",
+        "typeVersion": 2,
+        "position": [
+          -480,
+          448
+        ],
+        "parameters": {
+          "messages": {
+            "message": [
+              {
+                "content": "=You are a professional financial news screener and catalyst analyst. Your job is to find breaking news, SEC filings, earnings reports, analyst upgrades/downgrades, and sector-moving catalysts strictly from the last 24 hours. Be concise, factual, and eliminate market noise. Find and summarize all major news, SEC filings (Form 4, 8-K, 10-Q), institutional order flow, or analyst rating changes for stock ticker {{ $json.message.text }} published in the last 24 hours.\\n\\nStructure your response as follows:\\n1. Main Catalyst (1-2 sentences summarizing the most critical event, or 'No major catalyst' if none).\\n2. Key Details (3 short bullet points covering facts, numbers, or guidance).\\n3. Market Sentiment (Bullish, Bearish, or Neutral based strictly on the news)."
+              }
+            ]
+          },
+          "options": {
+            "searchAfterDate": "={{ $now.minus({ hours: 24 }).toFormat('MM/dd/yyyy') }}"
+          },
+          "requestOptions": {}
+        },
+        "credentials": {
+          "perplexityApi": {
+            "id": "D0LsQI2RGEfyzsKn",
+            "name": "Perplexity account"
+          }
+        }
+      },
+      {
+        "id": "e17def85-c714-4d0d-b17d-00bbacebdbb3",
+        "name": "Analyst",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.3,
+        "position": [
+          608,
+          96
+        ],
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gemini-3.8-flash-low",
+            "mode": "id"
+          },
+          "responses": {
+            "values": [
+              {
+                "content": "==You are an elite quantitative momentum day trader and risk manager.\nAnalyze the stock ticker {{ $('Telegram Stock Request Trigger').item.json.message.text }} using the provided market data:\n\n[INTRADAY OHLCV DATA (5m, 15m, 1D)]:\n{{ JSON.stringify($json.data[0].values) }}\n\n[24H PERPLEXITY NEWS CATALYST]:\n{{ $('Message a model').item.json.choices[0].message.content }}\n\nANALYTICAL & RISK RULES:\n1. RVOL & Momentum Validation:\n   - Calculate or estimate the Relative Volume (RVOL) based on intraday volume vs recent daily average volume.\n   - High conviction setups (BUY/SELL) require elevated RVOL (typically > 1.5x).\n2. Market & Sector Alignment:\n   - Deduce the broader Market Trend (SPY/QQQ / AI sector momentum) from the available price action and news sentiment.\n   - Do NOT issue a BUY if the broader sector/market structure is in a severe intraday breakdown unless the catalyst is overwhelmingly idiosyncratic.\n3. Strict Risk/Reward:\n   - Minimum R:R must be 1:2.0. Stop Loss must be placed at the structural invalidation level (below swing low or consolidation base on 5m).\n   - Target Price must align with daily/weekly key liquidity pools.\n\nBased on the OHLCV data and news sentiment above, analyze the stock and FILL IN the JSON values below with your real analytical calculations (do not copy the placeholder text):\n\n{\n  \"Date_Time\": \"{{ $now.format('yyyy-MM-dd HH:mm') }}\",\n  \"Ticker\": \"{{ $('Telegram Stock Request Trigger').item.json.message.text }}\",\n  \"Verdict\": \"<strictly BUY, SELL, or WATCH>\",\n  \"Confidence\": \"<percentage e.g. 75%>\",\n  \"Current_Price\": \"<latest close price from 5m data>\",\n    \"RVOL\": \"<estimated relative volume e.g. 2.4x or Low/Medium/High>\",\n  \"Market_Trend\": \"<Bullish, Bearish, or Neutral>\",\n  \"Entry_Trigger\": \"<specific technical breakout or bounce condition>\",\n  \"Stop_Loss\": \"<calculated invalidation price level>\",\n  \"Target_Price\": \"<calculated take profit target>\",\n  \"Risk_Reward\": \"<calculated ratio e.g. 1:2.4>\",\n  \"Catalyst_Headline\": \"<5-sentence summary of the news catalyst>\",\n  \"Outcome\": \"Pending\"\n}\n\nReturn ONLY the completed JSON object without markdown or code blocks."
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {
+            "parallelToolCalls": false
+          }
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "L21ElGepVbAzKPOh",
+            "name": "OpenAI account 2"
+          }
+        }
+      },
+      {
+        "id": "bea186a8-91ad-4b82-aca9-3f0647aebc85",
+        "name": "Merge Multi-Timeframe Data",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          -32,
+          64
+        ],
+        "parameters": {
+          "numberInputs": 3
+        }
+      },
+      {
+        "id": "a750f9fd-95cd-4ef6-b81a-f76a38ee8668",
+        "name": "Merge Technical and News Data",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          224,
+          96
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "1b7ac7f4-6fe3-4597-8984-b6e30a940244",
+        "name": "Final AI Context Builder",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          432,
+          96
+        ],
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        }
+      },
+      {
+        "id": "22515e87-82c2-4a00-b4c1-749785e3daab",
+        "name": "Fetch 5M Market Data",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          -480,
+          -176
+        ],
+        "parameters": {
+          "url": "https://api.twelvedata.com/time_series",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpQueryAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $json.message.text }}"
+              },
+              {
+                "name": "interval",
+                "value": "5min"
+              },
+              {
+                "name": "outputsize",
+                "value": "30"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "rW4ms4hNszUgLoK2",
+            "name": "Query Auth account"
+          }
+        }
+      },
+      {
+        "id": "f9299c40-ccf1-4f3c-a32c-b29fdeba9922",
+        "name": "Fetch 15M Market Data",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          -480,
+          32
+        ],
+        "parameters": {
+          "url": "https://api.twelvedata.com/time_series",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpQueryAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $json.message.text }}"
+              },
+              {
+                "name": "interval",
+                "value": "15min"
+              },
+              {
+                "name": "outputsize",
+                "value": "30"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "rW4ms4hNszUgLoK2",
+            "name": "Query Auth account"
+          }
+        }
+      },
+      {
+        "id": "e828e764-55db-4392-8a00-23cd56760faf",
+        "name": "Fetch Daily Context Data",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          -480,
+          240
+        ],
+        "parameters": {
+          "url": "https://api.twelvedata.com/time_series",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpQueryAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "=symbol",
+                "value": "={{ $json.message.text }}"
+              },
+              {
+                "name": "interval",
+                "value": "1day"
+              },
+              {
+                "name": "outputsize",
+                "value": "10"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "rW4ms4hNszUgLoK2",
+            "name": "Query Auth account"
+          }
+        }
+      },
+      {
+        "id": "4ec414ff-1232-4ee8-b3ce-61aa6cf8d7cb",
+        "name": "Telegram Stock Request Trigger",
+        "webhookId": "4ac3631f-6a4a-4cfc-b1de-7c6bb29db82d",
+        "type": "n8n-nodes-base.telegramTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -1136,
+          160
+        ],
+        "parameters": {
+          "updates": [
+            "message"
+          ],
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "XpsxJBZxAWu4uQK0",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "id": "9448d998-33b3-4abc-8b22-acc9407414cf",
+        "name": "Market Close (23:30 Mon-Fri)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -528,
+          768
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 23 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "3dc1dab8-9c9d-4c51-bd94-4664ad0828bb",
+        "name": "Read Trades from Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          -304,
+          768
+        ],
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+            "mode": "list",
+            "cachedResultName": "Trade_Log",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "Outcome",
+                "lookupValue": "Pending"
+              }
+            ]
+          },
+          "options": {
+            "outputRowNumber": true
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YKLDfEamB8A53Kro",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "1976ce4b-0a0e-4ef2-932c-487d58b2a1ad",
+        "name": "Filter Pending Trades",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -80,
+          768
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst pendingTrades = [];\n\n// \u0414\u0430\u0442\u0430 \u043e\u0442\u043f\u0440\u0435\u0434\u0438 2 \u0434\u043d\u0438 (48 \u0447\u0430\u0441\u0430) \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 YYYY-MM-DD\nconst twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));\nconst cutoffDateStr = twoDaysAgo.toISOString().substring(0, 10);\n\nitems.forEach((item, index) => {\n  const row = item.json;\n  \n  // \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u043c\u0435 Outcome \u043d\u0430\u043f\u044a\u043b\u043d\u043e \u043d\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e \u043e\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u044a\u0440\u0430 (Pending, pending, PENDING)\n  const outcome = String(row.Outcome || \"\").trim().toLowerCase();\n  \n  if (outcome === \"pending\" || outcome === \"\") {\n    // \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u0434\u0430\u0442\u0430\u0442\u0430 YYYY-MM-DD \u043e\u0442 Date_Time\n    const dateStr = String(row.Date_Time || \"\").trim().substring(0, 10);\n    \n    // \u0421\u0440\u0430\u0432\u043d\u044f\u0432\u0430\u043c\u0435 \u0434\u0438\u0440\u0435\u043a\u0442\u043d\u043e \u0434\u0430\u0442\u0430\u0442\u0430 (\u0430\u043a\u043e \u0435 \u0434\u043d\u0435\u0441, \u0432\u0447\u0435\u0440\u0430 \u0438\u043b\u0438 \u0437\u0430\u0432\u0447\u0435\u0440\u0430)\n    const isRecent = !dateStr || dateStr >= cutoffDateStr;\n    \n    if (isRecent) {\n      pendingTrades.push({\n        json: {\n          ...row,\n          row_number: row.row_number || (index + 2)\n        }\n      });\n    }\n  }\n});\n\nreturn pendingTrades;"
+        }
+      },
+      {
+        "id": "2572c64a-9420-44e9-b6c7-37062ea5e359",
+        "name": "Loop Pending Trades",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          144,
+          768
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "id": "08e188fa-99bf-4c00-9129-72954058c63c",
+        "name": "Evaluate Outcome Logic",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          768
+        ],
+        "parameters": {
+          "jsCode": "const trade = $('Loop Pending Trades').item.json;\nconst candleData = $input.first().json.values?.[0] || {};\n\nconst high = parseFloat(candleData.high || 0);\nconst low = parseFloat(candleData.low || 0);\nconst close = parseFloat(candleData.close || 0);\n\nconst target = parseFloat(String(trade.Target_Price).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst stop = parseFloat(String(trade.Stop_Loss).replace(/[^0-9.-]+/g, \"\")) || 0;\nconst entry = parseFloat(String(trade.Current_Price).replace(/[^0-9.-]+/g, \"\")) || close;\nconst verdict = (trade.Verdict || \"\").toUpperCase().trim();\nconst rrStr = trade.Risk_Reward ? \"+\" + String(trade.Risk_Reward).replace(\"1:\", \"\").trim() + \"R\" : \"+2.0R\";\n\nlet outcome = \"OPEN / EXPIRED\";\nlet pnl = \"0.0R\";\nlet exitPrice = close;\n\nif (verdict === \"BUY\") {\n  if (high >= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (low <= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (close - entry) / (entry - stop || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"SELL\" || verdict === \"SHORT\") {\n  if (low <= target && target > 0) {\n    outcome = \"WIN (Hit TP)\";\n    pnl = rrStr;\n    exitPrice = target;\n  } else if (high >= stop && stop > 0) {\n    outcome = \"LOSS (Hit SL)\";\n    pnl = \"-1.0R\";\n    exitPrice = stop;\n  } else {\n    const rMultiple = (entry - close) / (stop - entry || 1);\n    pnl = (rMultiple >= 0 ? \"+\" : \"\") + rMultiple.toFixed(2) + \"R (Unrealized)\";\n  }\n} else if (verdict === \"WATCH\") {\n  const isBullish = target > entry || target > stop;\n  if (isBullish) {\n    if (high >= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (low <= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakout)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  } else {\n    if (low <= target && target > 0) {\n      outcome = \"WATCH WIN (Hit Target)\";\n      pnl = rrStr;\n      exitPrice = target;\n    } else if (high >= stop && stop > 0) {\n      outcome = \"WATCH LOSS (Hit Stop)\";\n      pnl = \"-1.0R\";\n      exitPrice = stop;\n    } else {\n      outcome = \"WATCH (Range-bound / No Breakdown)\";\n      pnl = \"0.0R\";\n      exitPrice = close;\n    }\n  }\n}\n\nreturn {\n  json: {\n    row_number: trade.row_number,\n    Date_Time: trade.Date_Time,\n    Ticker: trade.Ticker,\n    Verdict: trade.Verdict,\n    Outcome: outcome,\n    Exit_Price: exitPrice.toFixed(2),\n    Realized_PnL: pnl,\n    Daily_High: high,\n    Daily_Low: low,\n    Daily_Close: close\n  }\n};"
+        }
+      },
+      {
+        "id": "b4064cbd-2ac8-4bc7-8ce1-0e88066d160e",
+        "name": "Send EOD Telegram Report",
+        "webhookId": "8a373f9f-4d6c-4cab-83f1-32da5974e896",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          800,
+          864
+        ],
+        "parameters": {
+          "chatId": "8643751612",
+          "text": "=\ud83d\udcca <b>EOD TRADE OUTCOME: #{{ $json.Ticker }}</b>\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\ud83c\udfaf <b>Verdict:</b> {{ $json.Verdict }}\n\ud83c\udfc1 <b>Outcome:</b> {{ $json.Outcome }}\n\ud83d\udcb0 <b>PnL:</b> <code>{{ $json.Realized_PnL }}</code>\n\ud83d\udcb5 <b>Exit / Close:</b> ${{ $json.Exit_Price }}\n\n\ud83d\udcc8 <b>Day Range:</b> Low ${{ $json.Daily_Low }} \u2014 High ${{ $json.Daily_High }}",
+          "additionalFields": {
+            "parse_mode": "HTML"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "XpsxJBZxAWu4uQK0",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "id": "c972d814-6b57-4991-a60d-549d7875ebca",
+        "name": "Fetch EOD Daily Candle",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          384,
+          768
+        ],
+        "parameters": {
+          "url": "https://api.twelvedata.com/time_series",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpQueryAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $json.Ticker }}"
+              },
+              {
+                "name": "interval",
+                "value": "1day"
+              },
+              {
+                "name": "outputsize",
+                "value": "1"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "rW4ms4hNszUgLoK2",
+            "name": "Query Auth account"
+          }
+        }
+      },
+      {
+        "id": "ec82fa31-87de-4b08-b3a5-765527151aad",
+        "name": "Update Outcome in Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          784,
+          640
+        ],
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8",
+            "mode": "list",
+            "cachedResultName": "Trade_Log",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GkVsC4ye3Matnr_NFsQF0WvaTFDl63VgLdm7ERisDK8/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "row_number": "={{ $json.row_number }}",
+              "Outcome": "={{ $json.Outcome }}",
+              "Realsied_PnL": "={{ $json.Realized_PnL }}"
+            },
+            "matchingColumns": [
+              "row_number"
+            ],
+            "schema": [
+              {
+                "id": "Date_Time",
+                "displayName": "Date_Time",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Ticker",
+                "displayName": "Ticker",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Verdict",
+                "displayName": "Verdict",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Confidence",
+                "displayName": "Confidence",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Current_Price",
+                "displayName": "Current_Price",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Entry_Trigger",
+                "displayName": "Entry_Trigger",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Stop_Loss",
+                "displayName": "Stop_Loss",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Target_Price",
+                "displayName": "Target_Price",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Risk_Reward",
+                "displayName": "Risk_Reward",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Catalyst_Headline",
+                "displayName": "Catalyst_Headline",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Outcome",
+                "displayName": "Outcome",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Realsied_PnL",
+                "displayName": "Realsied_PnL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Notes",
+                "displayName": "Notes",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "RVOL",
+                "displayName": "RVOL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Market Trend",
+                "displayName": "Market Trend",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YKLDfEamB8A53Kro",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "7a3f8921-b452-4720-92de-syncwebsite01",
+        "name": "Sync Website Terminal",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1392,
+          -96
+        ],
+        "parameters": {
+          "url": "https://stocks.lexmation.com/api.php",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "action",
+                "value": "sync"
+              }
+            ]
+          },
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Loop Over Tickers": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Message a model",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch Daily Context Data",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch 15M Market Data",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch 5M Market Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Structured JSON": {
+        "main": [
+          [
+            {
+              "node": "Append to Google Sheets",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Send Telegram Alert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Append to Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Tickers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message a model": {
+        "main": [
+          [
+            {
+              "node": "Merge Technical and News Data",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Analyst": {
+        "main": [
+          [
+            {
+              "node": "Parse Structured JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Multi-Timeframe Data": {
+        "main": [
+          [
+            {
+              "node": "Merge Technical and News Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Technical and News Data": {
+        "main": [
+          [
+            {
+              "node": "Final AI Context Builder",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Final AI Context Builder": {
+        "main": [
+          [
+            {
+              "node": "Analyst",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch 5M Market Data": {
+        "main": [
+          [
+            {
+              "node": "Merge Multi-Timeframe Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch 15M Market Data": {
+        "main": [
+          [
+            {
+              "node": "Merge Multi-Timeframe Data",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Fetch Daily Context Data": {
+        "main": [
+          [
+            {
+              "node": "Merge Multi-Timeframe Data",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "Telegram Stock Request Trigger": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Tickers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Market Close (23:30 Mon-Fri)": {
+        "main": [
+          [
+            {
+              "node": "Read Trades from Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Trades from Sheet": {
+        "main": [
+          [
+            {
+              "node": "Filter Pending Trades",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter Pending Trades": {
+        "main": [
+          [
+            {
+              "node": "Loop Pending Trades",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Pending Trades": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Fetch EOD Daily Candle",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evaluate Outcome Logic": {
+        "main": [
+          [
+            {
+              "node": "Send EOD Telegram Report",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Update Outcome in Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch EOD Daily Candle": {
+        "main": [
+          [
+            {
+              "node": "Evaluate Outcome Logic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Outcome in Sheet": {
+        "main": [
+          [
+            {
+              "node": "Loop Pending Trades",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Telegram Alert": {
+        "main": [
+          [
+            {
+              "node": "Sync Website Terminal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send EOD Telegram Report": {
+        "main": [
+          [
+            {
+              "node": "Sync Website Terminal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Lexmation EOOD",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-25T09:06:08.269Z",
+    "updatedAt": "2026-09-25T09:06:08.269Z",
+    "workflowPublishHistory": [
+      {
+        "id": 51,
+        "workflowId": "Pwh5dGkS9VCUECF5",
+        "versionId": "1b082914-5536-4789-afab-05ab3c63c964",
+        "event": "activated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-09-25T09:06:08.340Z"
+      }
+    ]
+  }
+}

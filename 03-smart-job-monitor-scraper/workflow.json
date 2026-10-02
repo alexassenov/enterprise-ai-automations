@@ -1,0 +1,107 @@
+{
+  "name": "Jobs.bg Scraper to Email Daily",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "0 9 * * *"
+      },
+      "id": "e9a6ad74-3250-4df2-8924-11e2f7b884f3",
+      "name": "Schedule Trigger (Every Day at 09:00)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "command": "python C:\\Users\\alexa\\Documents\\jobs_bg.py"
+      },
+      "id": "c125a812-70b1-4f36-9a2c-d6b38c2678f0",
+      "name": "Run Scraper Script",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        470,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "C:\\Users\\alexa\\Documents\\jobs_bg_all.xlsx"
+      },
+      "id": "d04a6217-15ef-4a11-b0db-fc0b387e07a6",
+      "name": "Read Excel File",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        690,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "alexassenov@gmail.com",
+        "subject": "Jobs.bg: Днешни IT Обяви за Работа",
+        "emailType": "text",
+        "message": "Здравей, \n\nПрикачен ще намериш актуализирания списък с нови ИТ обяви от jobs.bg.\n\nПоздрави,\nn8n Бот",
+        "binaryColNames": "data",
+        "options": {}
+      },
+      "id": "f516a202-b258-45a8-9273-aa94cfb18361",
+      "name": "Send Email via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        910,
+        240
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "your-gmail-credential-id",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Every Day at 09:00)": {
+      "main": [
+        [
+          {
+            "node": "Run Scraper Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Scraper Script": {
+      "main": [
+        [
+          {
+            "node": "Read Excel File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Excel File": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
