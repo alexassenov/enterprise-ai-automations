@@ -204,7 +204,11 @@ if ($action === 'eod_summary') {
             $curr = (float)($t['current_price'] ?? 0);
             $pnl = htmlspecialchars($t['realized_pnl'] ?? '0.0R');
             $icon = (strpos($pnl, '+') !== false) ? "🟢" : ((strpos($pnl, '-') !== false) ? "🔴" : "🟡");
+            $note = htmlspecialchars($t['management_note'] ?? '');
             $msg .= "• <b>#" . $tk . "</b> (" . $v . "): $" . number_format($curr, 2) . " | " . $icon . " <b>" . $pnl . "</b>\n";
+            if (!empty($note)) {
+                $msg .= "  ↳ 🔄 <i>" . $note . "</i>\n";
+            }
         }
     } else {
         $msg .= "ℹ️ <i>Няма активни отворени позиции за деня.</i>\n";
@@ -296,6 +300,24 @@ if ($action === 'daily_scan_summary') {
         $sl = number_format((float)($t['stop_loss'] ?? 0), 2);
         $tp = number_format((float)($t['target_price'] ?? 0), 2);
         $msg .= "• <b>#" . $tk . ":</b> Вход $" . $trig . " | SL $" . $sl . " | TP $" . $tp . "\n";
+    }
+    
+    $events = $stats['position_management_events'] ?? [];
+    $today_events = [];
+    $today_str = date('Y-m-d');
+    foreach ($events as $ev) {
+        if (($ev['scan_date'] ?? '') === $today_str) {
+            $today_events[] = $ev;
+        }
+    }
+    if (!empty($today_events)) {
+        $msg .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $msg .= "🔄 <b>АКТУАЛИЗАЦИЯ НА ОТВОРЕНИ ПОЗИЦИИ:</b>\n";
+        foreach ($today_events as $ev) {
+            $tk = htmlspecialchars($ev['ticker'] ?? '');
+            $adj_str = htmlspecialchars(implode(" | ", $ev['adjustments'] ?? []));
+            $msg .= "• <b>#" . $tk . ":</b> " . $adj_str . "\n";
+        }
     }
     
     $msg .= "━━━━━━━━━━━━━━━━━━━━\n";

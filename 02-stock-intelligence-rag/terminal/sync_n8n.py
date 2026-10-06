@@ -790,13 +790,84 @@ def run_sync():
     # Sort chronological ascending to track real-time slot occupancy
     trades_asc = sorted(raw_trades, key=lambda x: x["date_time"])
     open_slots_map = {}
+    active_open_trades = {}
+    position_management_events = []
+
     for t in trades_asc:
         tk = t["ticker"]
         out = t["outcome"]
+        dt = t.get("date_time", "")
+
+        # Active Position Management: dynamic TP expansion & trailing stop for existing open positions
+        if tk in active_open_trades:
+            open_trade = active_open_trades[tk]
+            open_date = open_trade.get("date_time", "")[:10]
+            curr_date = dt[:10]
+
+            if curr_date > open_date:
+                orig_tp = open_trade.get("target_price", 0.0)
+                new_tp = t.get("target_price", 0.0)
+                orig_sl = open_trade.get("stop_loss", 0.0)
+                new_sl = t.get("stop_loss", 0.0)
+                entry_p = open_trade.get("trigger_price", 0.0)
+                curr_p = open_trade.get("current_price", 0.0)
+                is_bullish = (open_trade.get("verdict") == "BUY") or (orig_tp > entry_p)
+
+                adjustments = []
+
+                # A. Target Expansion (Take profit expansion on upgrades)
+                if is_bullish and new_tp > orig_tp and new_tp > 0:
+                    open_trade["target_price"] = new_tp
+                    open_trade["target_expanded"] = True
+                    adjustments.append(f"Цел: ${orig_tp:.2f} ➔ ${new_tp:.2f}")
+
+                # B. Trailing Stop / Breakeven Protection
+                if is_bullish:
+                    if new_sl > orig_sl and new_sl > 0:
+                        open_trade["stop_loss"] = new_sl
+                        open_trade["trailing_stop_active"] = True
+                        adjustments.append(f"Стоп: ${orig_sl:.2f} ➔ ${new_sl:.2f}")
+                    if curr_p > entry_p and entry_p > open_trade["stop_loss"]:
+                        open_trade["stop_loss"] = entry_p
+                        open_trade["breakeven_active"] = True
+                        adjustments.append(f"Стоп на Breakeven @ ${entry_p:.2f}")
+                else:
+                    if 0 < new_sl < orig_sl:
+                        open_trade["stop_loss"] = new_sl
+                        open_trade["trailing_stop_active"] = True
+                        adjustments.append(f"Стоп: ${orig_sl:.2f} ➔ ${new_sl:.2f}")
+
+                # C. Early Invalidation Warning (Sentiment flipped to SELL)
+                if is_bullish and t.get("verdict") in ["SELL", "SHORT"]:
+                    open_trade["management_alert"] = f"⚠️ SELL сигнал на {curr_date}! Препоръчва се предсрочно затваряне."
+                    adjustments.append("Ранно излизане (SELL сигнал)")
+
+                # D. Mark newer scan record as ALREADY_IN_POSITION so we don't open duplicate
+                t["already_in_position"] = True
+                t["linked_entry_price"] = entry_p
+                t["linked_entry_date"] = open_trade.get("date_time", "")
+                t["entry_trigger"] = f"Вече в позиция от {open_date} @ ${entry_p:.2f}. Нивата се актуализират динамично."
+
+                if adjustments:
+                    open_trade["management_note"] = " | ".join(adjustments)
+                    position_management_events.append({
+                        "ticker": tk,
+                        "open_date": open_date,
+                        "scan_date": curr_date,
+                        "adjustments": adjustments,
+                        "entry": entry_p,
+                        "current_price": curr_p,
+                        "new_target": open_trade["target_price"],
+                        "new_stop": open_trade["stop_loss"]
+                    })
+
         if "WIN" in out or "LOSS" in out:
             if tk in open_slots_map:
                 del open_slots_map[tk]
+            if tk in active_open_trades:
+                del active_open_trades[tk]
         elif out == "OPEN":
+            active_open_trades[tk] = t
             # Scale HIMS swing position to 1 slot ($200) to keep total portfolio slots exactly 5
             if tk == "HIMS":
                 t["setup_grade"] = "B"
@@ -1066,6 +1137,7 @@ def run_sync():
         },
         "daily_top_5": daily_top_5,
         "daily_reserve": daily_reserve,
+        "position_management_events": position_management_events,
         "daily_schedule": {
             "scan_time_bg": "17:15 ч. (Всеки делничен ден)",
             "scan_time_ny": "10:15 AM (EST/EDT)",
