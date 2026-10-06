@@ -1,0 +1,297 @@
+{
+  "id": "kjBQYcZGBLnaVN8j",
+  "name": "Kalimera Send Outreach WhatsApp",
+  "description": null,
+  "active": true,
+  "activeVersionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+  "createdAt": "2026-10-06T07:11:35.884Z",
+  "updatedAt": "2026-10-06T08:50:22.607Z",
+  "isArchived": false,
+  "versionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "webhook-send-whatsapp",
+      "name": "Webhook WhatsApp Trigger",
+      "webhookId": "4edf07ca-5a16-4c4f-9f83-0388e0aee9ac",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kalimera-send-whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "clean-phone",
+      "name": "Format Phone & Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst rawPhone = body.phone || body.number || '';\nconst cleanPhone = rawPhone.replace(/[^0-9]/g, '');\nconst message = body.message || body.text || 'Γεια σας!';\nconst leadId = body.id || '';\n\nreturn [{\n  json: {\n    leadId: leadId,\n    phone: cleanPhone,\n    message: message\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "evolution-send",
+      "name": "WhatsApp Gateway (Baileys)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.17.0.1:8085/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.phone }}\",\n  \"text\": \"{{ $json.message }}\"\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-webhook",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"channel\": \"whatsapp\",\n  \"gateway\": \"Evolution API v2\"\n}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Phone & Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Phone & Message": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Gateway (Baileys)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Gateway (Baileys)": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {},
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "kjBQYcZGBLnaVN8j",
+      "projectId": "2aqhqfpnie4eg81l",
+      "project": {
+        "id": "2aqhqfpnie4eg81l",
+        "name": "Lexmation EOOD <lex.mation2026@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-06-23T11:05:36.196Z",
+        "updatedAt": "2026-06-24T17:09:53.950Z"
+      },
+      "createdAt": "2026-10-06T07:11:35.888Z",
+      "updatedAt": "2026-10-06T07:11:35.888Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+    "workflowId": "kjBQYcZGBLnaVN8j",
+    "nodes": [
+      {
+        "id": "webhook-send-whatsapp",
+        "name": "Webhook WhatsApp Trigger",
+        "webhookId": "4edf07ca-5a16-4c4f-9f83-0388e0aee9ac",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "kalimera-send-whatsapp",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "clean-phone",
+        "name": "Format Phone & Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst rawPhone = body.phone || body.number || '';\nconst cleanPhone = rawPhone.replace(/[^0-9]/g, '');\nconst message = body.message || body.text || 'Γεια σας!';\nconst leadId = body.id || '';\n\nreturn [{\n  json: {\n    leadId: leadId,\n    phone: cleanPhone,\n    message: message\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "evolution-send",
+        "name": "WhatsApp Gateway (Baileys)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          680,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://172.17.0.1:8085/send",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"number\": \"{{ $json.phone }}\",\n  \"text\": \"{{ $json.message }}\"\n}",
+          "options": {}
+        }
+      },
+      {
+        "id": "respond-webhook",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"success\": true,\n  \"channel\": \"whatsapp\",\n  \"gateway\": \"Evolution API v2\"\n}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook WhatsApp Trigger": {
+        "main": [
+          [
+            {
+              "node": "Format Phone & Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Phone & Message": {
+        "main": [
+          [
+            {
+              "node": "WhatsApp Gateway (Baileys)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WhatsApp Gateway (Baileys)": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Lexmation EOOD",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-06T08:50:22.611Z",
+    "updatedAt": "2026-10-06T08:50:22.611Z",
+    "workflowPublishHistory": [
+      {
+        "id": 119,
+        "workflowId": "kjBQYcZGBLnaVN8j",
+        "versionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+        "event": "activated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-06T08:50:22.678Z"
+      },
+      {
+        "id": 121,
+        "workflowId": "kjBQYcZGBLnaVN8j",
+        "versionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+        "event": "activated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-06T08:50:22.865Z"
+      },
+      {
+        "id": 120,
+        "workflowId": "kjBQYcZGBLnaVN8j",
+        "versionId": "57c07b8d-a65c-4b22-994f-c5b9d46bbe4e",
+        "event": "deactivated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-06T08:50:22.864Z"
+      }
+    ]
+  }
+}

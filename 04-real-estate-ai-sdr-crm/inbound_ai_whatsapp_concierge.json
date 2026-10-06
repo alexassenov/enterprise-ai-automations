@@ -1,0 +1,319 @@
+{
+  "name": "Kalimera Inbound AI WhatsApp Concierge",
+  "nodes": [
+    {
+      "id": "webhook-inbound-wa",
+      "name": "Webhook Inbound WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "9b12a84c-35cd-4f51-b8ae-24765d70b8a1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kalimera-whatsapp-inbound",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-history",
+      "name": "Fetch Conversation Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://kalimera.lexmation.com/crm/api.php?action=get_conversation&phone={{ $json.body.phone }}&limit=8",
+        "options": {
+          "timeout": 8000
+        }
+      }
+    },
+    {
+      "id": "keyword-filter",
+      "name": "Filter by Keywords or Existing Chat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300],
+      "parameters": {
+        "jsCode": "const input = $('Webhook Inbound WhatsApp').first().json.body;\nconst text = (input.text || '').toLowerCase().trim();\nconst history = $input.first().json.history || [];\nconst hasHistory = history.length > 0;\n\nfunction isRealEstateIntent(t) {\n  const explicitWords = [\n    'elasa', 'еласа', 'апартамент', 'apartament', 'apartment', 'вила', 'villa', 'студио', 'studio',\n    'каликратия', 'kallikratia', 'халкидики', 'halkidiki', 'гърция', 'greece',\n    'нощувк', 'нощувки', 'резервац', 'booking', 'airbnb',\n    'почивка', 'почивката', 'на море', 'на плаж', 'плажа'\n  ];\n  if (explicitWords.some(w => t.includes(w))) return true;\n\n  const intentRoots = ['свобод', 'цена', 'цени', 'наем', 'зает', 'струва'];\n  const contextRoots = ['юли', 'август', 'септември', 'юни', 'май', 'лято', 'нощув', 'дат', 'гост', 'човек', 'души', 'двойка', 'семейство', 'beach', 'july', 'august'];\n  return intentRoots.some(r => t.includes(r)) && contextRoots.some(r => t.includes(r));\n}\n\nconst matchesKeyword = isRealEstateIntent(text);\nconst shouldRespond = matchesKeyword || hasHistory;\n\nlet formattedHistory = 'No previous messages.';\nif (hasHistory) {\n  formattedHistory = history.map(m => `${m.role === 'user' ? 'Client' : 'Concierge'}: ${m.content}`).join('\\n');\n}\n\nreturn [{\n  json: {\n    shouldRespond,\n    phone: input.phone,\n    pushName: input.pushName || 'Client',\n    text: input.text,\n    hasHistory,\n    historyCount: history.length,\n    formattedHistory\n  }\n}];"
+      }
+    },
+    {
+      "id": "if-should-respond",
+      "name": "Check Should Respond",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [800, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-should-respond",
+              "leftValue": "={{ $json.shouldRespond }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "crm-status-update",
+      "name": "Update CRM Lead to Replied",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kalimera.lexmation.com/crm/api.php?action=webhook_update",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "status",
+              "value": "replied"
+            },
+            {
+              "name": "last_message",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      }
+    },
+    {
+      "id": "save-user-msg",
+      "name": "Save User Message to Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1220, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kalimera.lexmation.com/crm/api.php?action=append_conversation",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $('Filter by Keywords or Existing Chat').item.json.phone }}"
+            },
+            {
+              "name": "role",
+              "value": "user"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Filter by Keywords or Existing Chat').item.json.text }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      }
+    },
+    {
+      "id": "ai-concierge-generator",
+      "name": "AI Concierge Agent",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [1440, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      },
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "=gemini-3.8-flash-low",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are the official AI Concierge and Reservation Manager for 'Elasa Sea Apartment' (Nea Kallikratia, Halkidiki, Greece) & Kalimera Hospitality (website: https://elasa.assenov-solutions.com).\n\nPROPERTY KNOWLEDGE BASE:\n- Location: Nea Kallikratia, Halkidiki, Greece. Just 250m (4 min walk) from the sandy beach, 400-600m from town centre & tavernas, 25 min from Thessaloniki Airport (SKG).\n- Property: 57 m² modern apartment, 2 bedrooms (master with luxury double bed, second with 2 single beds) + living room with double sofa bed. Sleeps up to 5 guests (or 4 adults + 2 children).\n- Amenities included: Private terrace with sea view, A/C in every room, high-speed Wi-Fi, Smart TV, full kitchen, washing machine, iron, hair dryer, walk-in shower, complimentary toiletries, FREE private parking.\n\nPRICING & OFFER RULES:\n- Standard rate: €90 / night for 2 guests.\n- Extra guests: If 3-4 guests, calculate at €105 - €115 / night. If 5 guests, €120 / night.\n- Minimum stay: 7 nights. (If asking for less, remind them politely of the 7-night minimum for boutique hygiene standards).\n- Summer monthly stays: 30% discount.\n\nHOW TO STRUCTURE OFFERS WHEN DATES OR BOOKING ARE MENTIONED:\nWhenever the user asks for availability, specific dates, or an offer/price, generate a beautifully formatted WhatsApp proposal:\n1. Warm greeting acknowledging their dates/request (🌊🏖️).\n2. Structured breakdown using bullet points with emojis:\n   📅 Дати / Период: [споменатите дати и брой нощувки]\n   👥 Гости: [брой гости, или '2-ма души']\n   💶 Нощувка: [€90/вечер за двама]\n   💰 Обща сума: [пресметни точната сума: брой нощувки × цена]\n   ✨ Включено: Частно паркомясто, климатик във всички стаи, Wi-Fi, морска гледка и пълно оборудване.\n3. Link to photos: https://elasa.assenov-solutions.com\n4. Direct Call-to-Action asking if they would like to lock in these dates.\n\nCONVERSATION MEMORY (PAST MESSAGES WITH THIS CLIENT):\n{{ $('Filter by Keywords or Existing Chat').item.json.formattedHistory }}\n\nLATEST CLIENT MESSAGE:\nClient Name: {{ $('Filter by Keywords or Existing Chat').item.json.pushName }}\nClient Message: {{ $('Filter by Keywords or Existing Chat').item.json.text }}\n\nIMPORTANT CONVERSATION GUIDELINES:\n- If you already greeted the user or quoted an offer in the past messages above, DO NOT repeat the full initial greeting from scratch! Treat this as a continuous real-time conversation.\n- Acknowledge previous context if they are replying to an existing question (e.g., confirming dates, asking about parking after an offer, etc.).\n- Tone: Warm, highly professional, boutique luxury host.\n- Language: Match the exact language of the client (Bulgarian, Greek, or English).\n- Formatting: Clean plain text for WhatsApp with emojis. No markdown links [link](url).\n- Output ONLY the ready-to-send WhatsApp reply without quotes or system labels."
+            }
+          ]
+        },
+        "options": {
+          "parallelToolCalls": false
+        }
+      }
+    },
+    {
+      "id": "send-wa-reply",
+      "name": "Send WhatsApp Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.17.0.1:8085/send",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Filter by Keywords or Existing Chat').item.json.phone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.output?.[0]?.content?.[0]?.text || $json.text || $json.message?.content || $json.response }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      }
+    },
+    {
+      "id": "save-bot-reply",
+      "name": "Save AI Reply to Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1900, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kalimera.lexmation.com/crm/api.php?action=append_conversation",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $('Filter by Keywords or Existing Chat').item.json.phone }}"
+            },
+            {
+              "name": "role",
+              "value": "assistant"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('AI Concierge Agent').item.json.output?.[0]?.content?.[0]?.text || $('AI Concierge Agent').item.json.text || $('AI Concierge Agent').item.json.message?.content || $('AI Concierge Agent').item.json.response }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Inbound WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Fetch Conversation Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Conversation Memory": {
+      "main": [
+        [
+          {
+            "node": "Filter by Keywords or Existing Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Keywords or Existing Chat": {
+      "main": [
+        [
+          {
+            "node": "Check Should Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Should Respond": {
+      "main": [
+        [
+          {
+            "node": "Update CRM Lead to Replied",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Update CRM Lead to Replied": {
+      "main": [
+        [
+          {
+            "node": "Save User Message to Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save User Message to Memory": {
+      "main": [
+        [
+          {
+            "node": "AI Concierge Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Concierge Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Reply": {
+      "main": [
+        [
+          {
+            "node": "Save AI Reply to Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

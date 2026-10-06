@@ -116,25 +116,56 @@ Leads are strictly evaluated against institutional criteria:
 
 ---
 
-## 6. Setup & Deployment Guide
+## 6. Real-Time WhatsApp Integration & 24/7 AI Concierge
 
-### 1. Workflow Import:
-1. In n8n, go to **Workflows** ➔ **Import from File**.
-2. Select `workflow.json`.
-3. Provide your Perplexity API key and Telegram Bot token.
+The system features an autonomous, multi-tenant WhatsApp subsystem built on native `@whiskeysockets/baileys` and n8n:
 
-### 2. CRM Endpoint Configuration:
-The workflow sends newly enriched leads directly to the CRM endpoint:
-```http
-POST https://kalimera.lexmation.com/crm/api.php?action=add_lead
-Content-Type: application/json
+```text
+[Guest WhatsApp Message]
+           │
+           ▼
+[Baileys Gateway (:8085)] ──► Resolves Meta LID privacy IDs to real phone numbers
+           │
+           ▼
+[n8n AI Concierge Webhook]
+   ├── 1. Fetch Conversation History (CRM Memory Buffer)
+   ├── 2. Smart Intent Filter (Bypasses personal chats, triggers on hospitality intents)
+   ├── 3. Lead Status Update (Updates CRM lead to 'replied')
+   ├── 4. AI Concierge (Gemini 3.8 Flash):
+   │       • Domain knowledge: elasa.assenov-solutions.com
+   │       • Dynamic quote generator (€90/night for 2 guests, 7-night min)
+   │       • Conversation continuity (never repeats greetings, remembers quoted dates)
+   └── 5. Dispatch WhatsApp Reply (:8085/send)
 ```
 
-### 3. Live Access:
-Visit [https://kalimera.lexmation.com/crm/](https://kalimera.lexmation.com/crm/) to view the live Kanban board, monitor real-time pipeline volume, and execute 1-click outreach.
+### Components Included:
+1. `whatsapp-gateway/server.js`: Zero-cost Baileys microservice running on port `8085` via `systemd`. Includes phone pairing code linking and automatic Meta LID reverse mapping.
+2. `inbound_ai_whatsapp_concierge.json`: Full n8n workflow for conversational reservations, smart intent filtering, and context preservation.
+3. `outbound_send_whatsapp.json`: 1-click outbound messaging pipeline triggered from the CRM.
+4. `crm_api.php`: High-speed PHP API with memory endpoints (`get_conversation`, `append_conversation`).
 
 ---
 
-## 7. About Lexmation
+## 7. Setup & Deployment Guide
+
+### 1. Workflow Import:
+1. In n8n, import `workflow.json` (Lead Discovery & Audit), `outbound_send_whatsapp.json` (Outreach), and `inbound_ai_whatsapp_concierge.json` (AI Auto-Responder).
+2. Configure credentials: `OpenAI account 2` (or Gemini 3.8 Flash low).
+
+### 2. WhatsApp Gateway Service:
+1. Start the microservice: `node whatsapp-gateway/server.js` or via systemd (`kalimera-whatsapp.service`).
+2. Link your WhatsApp number using pairing code via `/pair?number=<YOUR_PHONE>`.
+
+### 3. CRM Endpoint Configuration:
+The system synchronizes with the Kalimera CRM REST API:
+```http
+POST https://kalimera.lexmation.com/crm/api.php?action=webhook_update
+GET  https://kalimera.lexmation.com/crm/api.php?action=get_conversation&phone=<PHONE>
+POST https://kalimera.lexmation.com/crm/api.php?action=append_conversation
+```
+
+---
+
+## 8. About Lexmation
 
 Architected and deployed by **Lexmation** ([lexmation.com](https://lexmation.com)) — Custom AI Agents, Enterprise Automation Pipelines, and Sovereign CRM Infrastructure.
