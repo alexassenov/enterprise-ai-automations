@@ -683,6 +683,7 @@
     {
       "id": "node-daily-scan-tg-summary",
       "name": "Send Daily Scan Summary Telegram",
+      "webhookId": "6a043dff-f39e-4dc4-8cf4-6a4dbca1fcb5",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
@@ -701,10 +702,17 @@
           "id": "XpsxJBZxAWu4uQK0",
           "name": "Telegram account"
         }
-      },
-      "webhookId": "6a043dff-f39e-4dc4-8cf4-6a4dbca1fcb5"
+      }
     },
     {
+      "id": "node-sync-eod-summary",
+      "name": "Sync & Build EOD Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        800
+      ],
       "parameters": {
         "url": "https://stocks.lexmation.com/api.php",
         "sendQuery": true,
@@ -719,14 +727,19 @@
         "options": {
           "timeout": 60000
         }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'done' } }];"
       },
-      "id": "node-sync-eod-summary",
-      "name": "Sync & Build EOD Summary",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "code-limit-single-scan-item",
+      "name": "Limit to Single Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        600,
-        800
+        1150,
+        -96
       ]
     }
   ],
@@ -735,7 +748,7 @@
       "main": [
         [
           {
-            "node": "Sync Website Terminal",
+            "node": "Limit to Single Item",
             "type": "main",
             "index": 0
           }
@@ -997,6 +1010,17 @@
     "Send Daily Scan Summary Telegram": {
       "main": [
         []
+      ]
+    },
+    "Limit to Single Item": {
+      "main": [
+        [
+          {
+            "node": "Sync Website Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

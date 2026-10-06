@@ -15,7 +15,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     1. `Loop Over Tickers` (приключен) ➔ `Sync Website Terminal` (`action=daily_scan_summary`) ➔ `Send Daily Scan Summary Telegram` (само Топ 5 подбор за търговия).
     2. `Market Close (23:30)` & `Manual EOD Trigger` ➔ `Sync & Build EOD Summary` (`action=eod_summary`) ➔ `Send EOD Telegram Report` (само вечерен EOD отчет).
 
+* **Telegram 10-Message Array Spam on Daily Scan Completion:**
+  * *Проблем:* Нодът `Loop Over Tickers` (`splitInBatches`) при завършване на цикъла предаваше всички 10 обработени тикера наведнъж на изход 0. Нодът `Sync Website Terminal` се изпълняваше 10 пъти за всеки елемент от масива, което караше Telegram нода да изпрати 10 дублирани съобщения (#454–#463).
+  * *Решение:* Добавихме филтриращ Code нод `Limit to Single Item` (`return [{ json: { status: 'done' } }];`) между края на цикъла и синхронизацията. Така към Telegram нода преминава строго 1 единствен финален сигнал.
+
 ### 🚀 Added (Нови функции)
+* **Филтърен нод `Limit to Single Item`:**
+  * Гарантира, че завършването на пакетната обработка винаги излъчва строго един единствен тригер, предотвратявайки множествени заявки и спам съобщения.
 * **Нов нод в n8n (`Sync & Build EOD Summary`):**
   * Извиква специализирания сървърен ендпоинт `api.php?action=eod_summary` с увеличен тайм-аут (60 сек.) за надеждно извличане на реалните вътрешнодневни свещи.
   * Изпраща точно структуриран вечерен доклад с баланс на портфейла, ROI %, текущ Win Rate, списък на активните отворени суинг позиции с текущ плаващ PnL (R), приключените сделки за деня и чакащите тикери.
