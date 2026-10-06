@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2026-10-06] — Telegram Dual-Branch Decoupling & Independent EOD Delivery
+
+### 🐛 Fixed (Отстранени грешки)
+* **Telegram Duplicate Message & Workflow Cross-Trigger Bug:**
+  * *Проблем:* Предишната архитектура свързваше нода `Sync Website Terminal` едновременно към цикъла за дневен анализ (`Loop Over Tickers`) и към вечерния таймер за край на сесията (`Market Close 23:30`). В резултат на това и двете събития задействаха едновременно `Send Daily Scan Summary Telegram` и `Send EOD Telegram Report`, изпращайки дублирани дневни списъци в 17:35 ч. и отново в 23:30 ч. вместо вечерния финансов отчет.
+  * *Решение:* Разделихме потока на два напълно изолирани и независими клона:
+    1. `Loop Over Tickers` (приключен) ➔ `Sync Website Terminal` (`action=daily_scan_summary`) ➔ `Send Daily Scan Summary Telegram` (само Топ 5 подбор за търговия).
+    2. `Market Close (23:30)` & `Manual EOD Trigger` ➔ `Sync & Build EOD Summary` (`action=eod_summary`) ➔ `Send EOD Telegram Report` (само вечерен EOD отчет).
+
+### 🚀 Added (Нови функции)
+* **Нов нод в n8n (`Sync & Build EOD Summary`):**
+  * Извиква специализирания сървърен ендпоинт `api.php?action=eod_summary` с увеличен тайм-аут (60 сек.) за надеждно извличане на реалните вътрешнодневни свещи.
+  * Изпраща точно структуриран вечерен доклад с баланс на портфейла, ROI %, текущ Win Rate, списък на активните отворени суинг позиции с текущ плаващ PnL (R), приключените сделки за деня и чакащите тикери.
+* **Ръчен EOD уебхук тригер (`trigger-eod-eval`):**
+  * Позволява незабавна верификация и ръчно преизчисляване на вечерния отчет през уебхук при необходимост.
+
+---
+
 ## [2026-10-02] — Market Close Overhaul, Daily Scan Summary & Audit Dashboard
 
 ### 🐛 Fixed (Отстранени грешки)
