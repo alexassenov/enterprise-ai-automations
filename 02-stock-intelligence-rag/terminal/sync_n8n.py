@@ -219,7 +219,13 @@ def evaluate_trade_lifecycle(verdict, entry, trigger, target, stop, start_dt, ri
 
         # Check if breakout occurred on post-signal candles
         trig_idx = -1
+        # Session cutoff: A WATCH setup can only be triggered during its active trading session (within 28h)
+        signal_session_cutoff = start_dt + timedelta(hours=28) if start_dt else None
+
         for idx, c in enumerate(post_candles):
+            if signal_session_cutoff and c["dt"] > signal_session_cutoff:
+                # Active session window passed without breakout confirmation
+                break
             if is_bullish and c["high"] >= breakout_level:
                 trig_idx = idx
                 break
@@ -236,7 +242,10 @@ def evaluate_trade_lifecycle(verdict, entry, trigger, target, stop, start_dt, ri
                         break
 
         if trig_idx == -1:
-            # Price NEVER broke the trigger price after signal was generated
+            # If the trading session has passed (older than 28 hours) and trigger was never hit:
+            now_utc = datetime.now(timezone.utc)
+            if start_dt and (now_utc - start_dt) > timedelta(hours=28):
+                return "WATCH (Range-bound)", "0.0R", 0.0
             return "PENDING", "0.0R", 0.0
 
         # Breakout was hit! Evaluate from that candle onwards:
@@ -867,6 +876,13 @@ def run_sync():
             if tk in active_open_trades:
                 del active_open_trades[tk]
         elif out == "OPEN":
+            # Ticker Deduplication: If a previous trade for this ticker was OPEN, settle it to prevent duplicate slots
+            if tk in active_open_trades and active_open_trades[tk] != t:
+                prev_t = active_open_trades[tk]
+                if prev_t.get("date_time", "") < t.get("date_time", ""):
+                    prev_t["outcome"] = "WATCH (Range-bound)" if prev_t.get("verdict") == "WATCH" else "CLOSED"
+                    prev_t["realized_pnl"] = f"{prev_t.get('pnl_r', 0.0):+.1f}R"
+
             active_open_trades[tk] = t
             # Scale HIMS swing position to 1 slot ($200) to keep total portfolio slots exactly 5
             if tk == "HIMS":
