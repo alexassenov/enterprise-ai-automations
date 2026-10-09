@@ -39,6 +39,14 @@ Production-ready, enterprise-grade AI automations, autonomous agent systems, pro
 
 ---
 
+### 5. [Web Landing Page & Automated AI SEO Blog Engine (Dr. V Meditation)](./05-ai-seo-blog-engine-drvmeditation/)
+* **Category:** SEO Growth Engine, Content Marketing Automation, Health & Wellness
+* **Tech Stack:** `n8n`, `OpenAI / Gemini`, `Tailwind CSS`, `Nginx`, `Cloudflare CDN & SSL`, [Live Domain](https://drvmeditation.com)
+* **Architecture:** Production cloud deployment driving organic search traffic and mobile app downloads for Dr. V Meditation & Healing. Pairs an ultra-fast responsive landing page with an automated n8n content pipeline producing long-form wellness articles with dynamic CTAs and schema markup.
+
+
+---
+
 ## 🛠️ Core Engineering Philosophy
 
 1. **Deterministic Outputs & Zero Hallucination:** Dual-agent audits, strict JSON Schema / Pydantic parsing, and continuous output validation.
