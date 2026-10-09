@@ -3232,61 +3232,21 @@ if (!empty($trades)) {
         // ==============================================================
         async function updateLiveStockPrices() {
             try {
+                if (document.hidden) return; // Do not poll when tab is inactive/minimized
+
                 const res = await fetch('/live_prices.php');
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data) return;
 
-                // Cooldown guard to prevent rapid reload loops (min 15 seconds between automatic reloads)
-                const lastAutoReload = parseInt(sessionStorage.getItem('lexmation_last_auto_reload') || '0', 10);
-                const nowTs = Date.now();
-                const canAutoReload = (nowTs - lastAutoReload) > 15000;
-
-                // 1. Instant Auto-Reload on Target Hit, Stop Hit, or Trade State Change
+                // Silent background sync if target/stop hit detected (max once per 60s, NO PAGE RELOAD)
                 if (data.target_hit_detected || data.stop_hit_detected) {
-                    if (canAutoReload) {
-                        sessionStorage.setItem('lexmation_last_auto_reload', nowTs.toString());
-                        console.log('Real-time Target/Stop Hit detected! Triggering backend sync before reload...');
-                        try {
-                            await fetch('api.php?action=sync');
-                        } catch (e) {
-                            console.error('Auto sync error:', e);
-                        }
-                        window.location.reload();
+                    const nowTs = Date.now();
+                    const lastSync = parseInt(sessionStorage.getItem('lexmation_last_bg_sync') || '0', 10);
+                    if (nowTs - lastSync > 60000) {
+                        sessionStorage.setItem('lexmation_last_bg_sync', nowTs.toString());
+                        fetch('api.php?action=sync').catch(() => {});
                     }
-                    return;
-                }
-                if (window.__INITIAL_CLOSED_COUNT !== undefined && data.closed_count && data.closed_count !== window.__INITIAL_CLOSED_COUNT) {
-                    if (canAutoReload) {
-                        sessionStorage.setItem('lexmation_last_auto_reload', nowTs.toString());
-                        console.log('Closed trade count updated:', data.closed_count, 'reloading...');
-                        window.location.reload();
-                    }
-                    return;
-                }
-                if (window.__INITIAL_TRADES_HASH && data.trades_hash && data.trades_hash !== window.__INITIAL_TRADES_HASH) {
-                    if (canAutoReload) {
-                        sessionStorage.setItem('lexmation_last_auto_reload', nowTs.toString());
-                        console.log('Trades state hash changed on server, reloading...');
-                        window.location.reload();
-                    }
-                    return;
-                }
-                if (window.__INITIAL_TRADES_TIME && data.latest_trade_time && data.latest_trade_time !== window.__INITIAL_TRADES_TIME) {
-                    if (canAutoReload) {
-                        sessionStorage.setItem('lexmation_last_auto_reload', nowTs.toString());
-                        console.log('New trade detected:', data.latest_trade_time);
-                        window.location.reload();
-                    }
-                    return;
-                }
-                if (window.__INITIAL_TRADES_COUNT && data.trade_count && data.trade_count !== window.__INITIAL_TRADES_COUNT) {
-                    if (canAutoReload) {
-                        sessionStorage.setItem('lexmation_last_auto_reload', nowTs.toString());
-                        console.log('Trade count changed, reloading:', data.trade_count);
-                        window.location.reload();
-                    }
-                    return;
                 }
 
                 // 2. Real-Time Slot & Cash Status Update in Card 3
@@ -3740,9 +3700,16 @@ if (!empty($trades)) {
             const savedMode = localStorage.getItem('lexmation_stock_view_mode') || 'simple';
             setViewMode(savedMode);
 
-            // Real-time stock quotes poller
+            // Real-time stock quotes poller (every 60s, smoothly updates DOM without page reload)
             updateLiveStockPrices();
-            setInterval(updateLiveStockPrices, 8000);
+            setInterval(updateLiveStockPrices, 60000);
+
+            // Immediately refresh prices when returning to tab
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    updateLiveStockPrices();
+                }
+            });
 
             // Carousel Touch Swipe & Keyboard support
             const carousel = document.getElementById('trade-carousel-container');
