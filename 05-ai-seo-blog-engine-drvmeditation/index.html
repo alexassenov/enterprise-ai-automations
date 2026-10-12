@@ -359,12 +359,13 @@
         <div class="relative">
           <!-- Decorative rings -->
           <div class="absolute inset-0 rounded-3xl" style="background:linear-gradient(135deg,var(--brand-purple),var(--brand-teal));opacity:0.15;transform:rotate(3deg);border-radius:2rem;"></div>
-          <img
-            src="2FC0D2DD-5FB8-42D8-823C-20D96B54076B.jpeg"
-            alt="Dr. V — Healer, Author & Meditation Guide"
-            class="relative rounded-3xl object-cover shadow-2xl"
-            style="width:300px;height:400px;object-fit:cover;border-radius:1.8rem;"
-          >
+          <div class="relative rounded-3xl overflow-hidden shadow-2xl bg-white border border-slate-100 flex items-center justify-center p-3" style="width:300px;height:380px;">
+            <img
+              src="B92D3EE7-9532-4914-99AC-19082410B5D1.png"
+              alt="Dr. V — Healer, Author & Meditation Guide"
+              class="w-full h-full object-cover rounded-2xl"
+            >
+          </div>
           <!-- Badge -->
           <div class="absolute -bottom-5 -left-5 bg-white rounded-2xl px-5 py-3 shadow-xl border" style="border-color:rgba(114,114,187,0.15)">
             <div class="flex items-center gap-3">
@@ -394,13 +395,15 @@
   <section id="about" class="py-24 px-6 bg-white">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
       <!-- Image collage -->
-      <div class="relative">
-        <img
-          src="851EE6E2-18C1-409C-B61B-BE470F24458C.jpeg"
-          alt="Dr. V — About"
-          class="rounded-2xl shadow-xl w-full object-cover"
-          style="max-height:360px;object-position:center top;"
-        >
+      <div class="relative flex justify-center">
+        <div class="relative rounded-3xl overflow-hidden shadow-2xl bg-white border border-slate-100 p-3 max-w-sm w-full">
+          <img
+            src="B92D3EE7-9532-4914-99AC-19082410B5D1.png"
+            alt="Dr. V — About"
+            class="rounded-2xl w-full object-cover shadow-sm"
+            style="max-height:360px;"
+          >
+        </div>
         <!-- Quote overlay -->
         <div class="absolute -bottom-8 -right-4 bg-white rounded-2xl p-5 shadow-xl max-w-xs border" style="border-color:rgba(0,157,138,0.15)">
           <span class="quote-mark">&ldquo;</span>
@@ -552,16 +555,13 @@
 
         <!-- Book 2: 3 Pilares ES -->
         <div class="book-card">
-          <div class="flex justify-center items-center bg-gradient-to-b from-purple-50 to-indigo-50 p-8" style="min-height:280px;">
-            <div class="text-center">
-              <div class="w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:linear-gradient(135deg,var(--brand-purple),var(--brand-teal))">
-                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-                </svg>
-              </div>
-              <p class="text-sm font-medium" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;">Los Tres Pilares</p>
-              <p class="text-xs text-gray-400">de la Autosanación</p>
-            </div>
+          <div class="flex justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+            <img
+              src="book_3_pilares_cover.jpg"
+              alt="Los Tres Pilares de la Autosanación — Dr. V"
+              class="shadow-2xl rounded-lg object-cover"
+              style="height:280px;width:auto;max-width:100%"
+            >
           </div>
           <div class="p-6">
             <div class="text-xs font-bold tracking-widest mb-2" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;">ESPAÑOL</div>
