@@ -285,10 +285,11 @@
         <li><a href="#pillars" class="nav-link">Three Pillars</a></li>
         <li><a href="#books" class="nav-link">Books</a></li>
         <li><a href="#app" class="nav-link">App</a></li>
+        <li><a href="#quiz" class="nav-link font-semibold text-teal-600" style="color:var(--brand-teal);">Quiz</a></li>
         <li><a href="#blog" class="nav-link">Blog</a></li>
         <li><a href="#contact" class="nav-link">Contact</a></li>
         <li>
-          <a href="#contact" class="btn-primary" style="padding:0.6rem 1.5rem;font-size:0.82rem;">Start Healing →</a>
+          <a href="#quiz" class="btn-primary" style="padding:0.6rem 1.5rem;font-size:0.82rem;">Start Quiz →</a>
         </li>
       </ul>
 
@@ -306,6 +307,7 @@
       <a href="#pillars" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Three Pillars</a>
       <a href="#books" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Books</a>
       <a href="#app" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">App</a>
+      <a href="#quiz" class="nav-link block px-6 py-3 border-b font-semibold" style="border-color:rgba(114,114,187,0.08);color:var(--brand-teal);" onclick="closeMobile()">Quiz: How Can We Help?</a>
       <a href="#blog" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Blog</a>
       <a href="#contact" class="nav-link block px-6 py-3" onclick="closeMobile()">Contact</a>
     </div>
@@ -839,6 +841,251 @@
     </div>
   </section>
 
+  <!-- ============ QUIZ ============ -->
+  <section id="quiz" style="background:linear-gradient(160deg,#f7f5ff 0%,#edfbf9 60%,#f0f8ff 100%);padding:6rem 1.5rem;">
+    <div class="max-w-3xl mx-auto">
+
+      <div class="text-center mb-10">
+        <span class="section-label">Personalized Healing Path</span>
+        <h2 class="section-title">How Can We <span style="color:var(--brand-teal)">Help You?</span></h2>
+        <p class="section-subtitle mx-auto text-center" style="max-width:520px;">Answer 10 quick questions and we'll show you exactly how the Dr. V Healing app can support your journey.</p>
+      </div>
+
+      <div id="quiz-card" style="background:#fff;border-radius:2rem;box-shadow:0 12px 60px rgba(114,114,187,0.13);border:1px solid rgba(114,114,187,0.1);overflow:hidden;">
+
+        <!-- Progress bar -->
+        <div style="background:#f0eeff;height:6px;">
+          <div id="quiz-progress" style="height:6px;background:linear-gradient(90deg,var(--brand-purple),var(--brand-teal));width:10%;transition:width 0.4s ease;border-radius:6px;"></div>
+        </div>
+
+        <div class="flex items-center justify-between px-8 pt-6 pb-2">
+          <span id="quiz-step-label" style="font-family:'Montserrat',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--brand-purple);">QUESTION 1 OF 10</span>
+          <button onclick="quizRestart()" id="quiz-restart-btn" style="display:none;font-size:0.78rem;color:#aaa;background:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;">↩ Restart</button>
+        </div>
+
+        <div id="quiz-questions" style="padding:1.5rem 2rem 2.5rem;">
+
+          <div class="quiz-step" data-step="1">
+            <h3 class="quiz-q">What are you going through right now?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="pain">😣 &nbsp;Chronic pain or physical illness</button>
+              <button class="quiz-opt" data-tag="anxiety">😰 &nbsp;Anxiety, stress or burnout</button>
+              <button class="quiz-opt" data-tag="sleep">🌙 &nbsp;Sleep problems or insomnia</button>
+              <button class="quiz-opt" data-tag="trauma">💔 &nbsp;Emotional trauma or grief</button>
+              <button class="quiz-opt" data-tag="depression">🌧️ &nbsp;Depression or feeling lost</button>
+              <button class="quiz-opt" data-tag="growth">🌱 &nbsp;I want to grow spiritually</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="2" style="display:none;">
+            <h3 class="quiz-q">How long have you been dealing with this?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt">⏱️ &nbsp;Less than 3 months</button>
+              <button class="quiz-opt">📅 &nbsp;3 to 12 months</button>
+              <button class="quiz-opt" data-tag="longterm">🗓️ &nbsp;1 to 5 years</button>
+              <button class="quiz-opt" data-tag="longterm">🕰️ &nbsp;More than 5 years</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="3" style="display:none;">
+            <h3 class="quiz-q">Have you tried conventional medicine or therapy?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt">✅ &nbsp;Yes, it helped somewhat</button>
+              <button class="quiz-opt" data-tag="nodoctors">🚫 &nbsp;Yes, but it didn't help enough</button>
+              <button class="quiz-opt">🤷 &nbsp;No, I haven't tried yet</button>
+              <button class="quiz-opt" data-tag="nodoctors">😔 &nbsp;Yes — doctors said nothing more can be done</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="4" style="display:none;">
+            <h3 class="quiz-q">How would you describe your current mental state?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt">🌤️ &nbsp;Hopeful but struggling</button>
+              <button class="quiz-opt" data-tag="depleted">😩 &nbsp;Exhausted and completely depleted</button>
+              <button class="quiz-opt" data-tag="depleted">🔒 &nbsp;Stuck — nothing seems to change</button>
+              <button class="quiz-opt" data-tag="depleted">🕯️ &nbsp;In despair, but willing to try anything</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="5" style="display:none;">
+            <h3 class="quiz-q">Do you have any daily wellness practice right now?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt">💪 &nbsp;Yes, a solid consistent routine</button>
+              <button class="quiz-opt" data-tag="beginner">🌱 &nbsp;Something small, but not consistent</button>
+              <button class="quiz-opt" data-tag="beginner">❌ &nbsp;No routine at all</button>
+              <button class="quiz-opt" data-tag="beginner">🔁 &nbsp;I've tried but can't stick to it</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="6" style="display:none;">
+            <h3 class="quiz-q">How much time can you realistically give to healing each day?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="short">⚡ &nbsp;5 to 10 minutes</button>
+              <button class="quiz-opt">🌿 &nbsp;10 to 20 minutes</button>
+              <button class="quiz-opt">🧘 &nbsp;20 to 30 minutes</button>
+              <button class="quiz-opt">🕰️ &nbsp;More than 30 minutes</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="7" style="display:none;">
+            <h3 class="quiz-q">What would healing look like for you?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="pain">🦶 &nbsp;Less pain and more physical freedom</button>
+              <button class="quiz-opt" data-tag="anxiety">🧠 &nbsp;A calm mind and less anxiety</button>
+              <button class="quiz-opt" data-tag="sleep">🌙 &nbsp;Deep, restful sleep every night</button>
+              <button class="quiz-opt" data-tag="joy">☀️ &nbsp;Reconnecting with joy and purpose</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="8" style="display:none;">
+            <h3 class="quiz-q">Has anyone ever told you recovery wasn't possible for you?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="nodoctors">🏥 &nbsp;Yes — doctors or specialists</button>
+              <button class="quiz-opt" data-tag="nodoctors">👥 &nbsp;Yes — people around me</button>
+              <button class="quiz-opt">😟 &nbsp;No, but I fear that myself</button>
+              <button class="quiz-opt">💫 &nbsp;No — I believe recovery is fully possible</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="9" style="display:none;">
+            <h3 class="quiz-q">What do you need most right now?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="beginner">🎧 &nbsp;Guided meditation to start with</button>
+              <button class="quiz-opt" data-tag="anxiety">🛡️ &nbsp;Real tools to manage anxiety and stress</button>
+              <button class="quiz-opt" data-tag="growth">🤝 &nbsp;Inspiration and proof that it's possible</button>
+              <button class="quiz-opt">💤 &nbsp;Something to help me sleep and rest deeply</button>
+            </div>
+          </div>
+
+          <div class="quiz-step" data-step="10" style="display:none;">
+            <h3 class="quiz-q">Are you ready to take the first step today?</h3>
+            <div class="quiz-options">
+              <button class="quiz-opt" data-tag="ready">✨ &nbsp;Yes — I'm ready right now</button>
+              <button class="quiz-opt" data-tag="ready">🤍 &nbsp;I'm scared, but I'll try</button>
+              <button class="quiz-opt">🔍 &nbsp;I need a little more information first</button>
+              <button class="quiz-opt" data-tag="ready">🔥 &nbsp;I've been ready for a long time</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Result panel -->
+        <div id="quiz-result" style="display:none;padding:2.5rem 2rem 3rem;text-align:center;">
+          <div id="qr-icon" style="font-size:3.5rem;margin-bottom:1rem;"></div>
+          <h3 id="qr-title" style="font-family:'Montserrat',sans-serif;font-size:1.35rem;font-weight:800;color:#404040;margin-bottom:1rem;line-height:1.35;max-width:480px;margin-left:auto;margin-right:auto;"></h3>
+          <p id="qr-body" style="font-weight:300;line-height:1.8;color:var(--text-body);max-width:480px;margin:0 auto 1.75rem;font-size:0.97rem;"></p>
+          <div id="qr-features" style="background:linear-gradient(135deg,#f7f5ff,#edfbf9);border-radius:1.2rem;padding:1.4rem 1.6rem;margin-bottom:2rem;text-align:left;max-width:460px;margin-left:auto;margin-right:auto;"></div>
+          <p style="font-size:0.8rem;color:#bbb;margin-bottom:1rem;font-family:'Montserrat',sans-serif;letter-spacing:0.06em;text-transform:uppercase;">Free to Download · No Credit Card</p>
+          <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-bottom:1.5rem;">
+            <a href="https://apps.apple.com/ca/app/dr-v-healing/id6757068416" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:0.95rem;">
+              🍎 &nbsp;Start Free on App Store
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=com.drvhealing.app" target="_blank" rel="noopener" class="btn-secondary" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:0.95rem;">
+              🤖 &nbsp;Start Free on Google Play
+            </a>
+          </div>
+          <p style="font-size:0.82rem;font-style:italic;color:#bbb;max-width:380px;margin:0 auto;">"I was bedridden. Doctors gave up on me. The Three Pillars brought me back to life." — Dr. V</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .quiz-q { font-family:'Montserrat',sans-serif;font-size:1.2rem;font-weight:700;color:#404040;margin-bottom:1.4rem;line-height:1.35; }
+    .quiz-opt {
+      display:block;width:100%;text-align:left;padding:0.88rem 1.2rem;margin-bottom:0.55rem;
+      border-radius:12px;border:1.5px solid #e8e6f5;background:#fafafe;
+      font-family:'Roboto',sans-serif;font-size:0.95rem;color:#404040;
+      cursor:pointer;transition:all 0.18s;line-height:1.4;
+    }
+    .quiz-opt:hover { border-color:var(--brand-purple);background:rgba(114,114,187,0.06);transform:translateX(4px); }
+    .quiz-opt.selected { border-color:var(--brand-teal);background:rgba(0,157,138,0.08);font-weight:500; }
+    .qr-feat { display:flex;align-items:flex-start;gap:0.7rem;margin-bottom:0.7rem; }
+    .qr-feat:last-child { margin-bottom:0; }
+    .qr-feat-icon { width:28px;height:28px;border-radius:50%;background:rgba(0,157,138,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.85rem;margin-top:1px; }
+  </style>
+
+  <script>
+  (function(){
+    var cur=1,total=10,tags=[];
+    var DB={
+      pain:{icon:'🦶',title:"Your Body Is Ready to Heal — It's Waiting for Your Mind",
+        body:"Dr. V was told by multiple surgeons she would never live without pain. She proved them wrong — using the exact tools inside the Dr. V Healing app. Chronic pain has a mental component medicine alone cannot address. Meditation, visualization and faith create neurological changes that nothing else can replicate.",
+        feats:[{i:'🧘',t:'<strong>Pain Relief Meditations</strong> — guided sessions built specifically for chronic pain and physical recovery'},{i:'🌬️',t:'<strong>Breathing & Relaxation Timers</strong> — interrupt pain cycles and activate your parasympathetic nervous system'},{i:'💫',t:'<strong>Visualization Journeys</strong> — reprogram your mind to expect healing, not suffering'}]},
+      anxiety:{icon:'🧠',title:"Your Mind Is Overwhelmed — Let's Create Space for Calm",
+        body:"Anxiety is your nervous system stuck in survival mode. The Dr. V Healing app trains you to exit that state — not through willpower, but through consistent, gentle daily practice. Faith and gratitude break the anxiety loop at its root.",
+        feats:[{i:'🛡️',t:'<strong>Anxiety Relief Sessions</strong> — calming guided meditations for acute stress and ongoing worry'},{i:'🙏',t:'<strong>Daily Gratitude Practice</strong> — shifts your nervous system out of threat-mode, proven by science'},{i:'⚡',t:'<strong>Quick 5-minute sessions</strong> — effective even on the hardest days when energy is low'}]},
+      sleep:{icon:'🌙',title:"Rest Is Not a Luxury — It's the Foundation of Every Healing",
+        body:"Without deep, restorative sleep your body cannot repair itself. The Dr. V Healing app includes dedicated sleep journeys that guide you from wakefulness into deep rest — naturally, without medication.",
+        feats:[{i:'💤',t:'<strong>Sleep Journey Audio Sessions</strong> — immersive guided experiences for falling and staying asleep'},{i:'🌬️',t:'<strong>Bedtime Breathing Rituals</strong> — slow your mind and body down in under 10 minutes'},{i:'🌕',t:'<strong>Evening Gratitude Reflection</strong> — release the weight of the day and enter rest peacefully'}]},
+      depleted:{icon:'🕯️',title:"Even a Tiny Flame Can Light the Way — You Don't Need to Be Strong Yet",
+        body:"When you are exhausted and depleted, the last thing you need is another demanding program. Dr. V built her recovery from bed — five minutes at a time. The app meets you exactly where you are, and asks nothing more than your willingness.",
+        feats:[{i:'⚡',t:'<strong>Micro-sessions from 5 minutes</strong> — designed for days when everything feels impossible'},{i:'💜',t:'<strong>Compassionate guided audio</strong> — Dr. V\'s voice, rooted in lived experience, not theory'},{i:'🌱',t:'<strong>Gentle daily habit builder</strong> — small steps that compound into profound transformation'}]},
+      growth:{icon:'🌟',title:"You're Ready for the Next Level — Let's Go Deeper",
+        body:"Spiritual growth is not a destination — it's a daily practice of alignment. The Three Pillars — Faith, Gratitude, Meditation — are not just healing tools. They are a life philosophy Dr. V lives by every single day. The app is your companion on that journey.",
+        feats:[{i:'🙏',t:'<strong>Faith & Gratitude Practices</strong> — deepen your connection with your inner voice and higher purpose'},{i:'🧘',t:'<strong>Advanced Meditation Journeys</strong> — move beyond stress relief into genuine inner stillness'},{i:'📖',t:'<strong>Dr. V\'s core teachings</strong> — rooted in real recovery, real faith, and real science'}]},
+      def:{icon:'🌿',title:"Your Healing Journey Starts Today — The App Is Ready for You",
+        body:"Whatever you're facing, the Dr. V Healing app was built from lived experience — not theory. Dr. V went from wheelchair to walking, from despair to joy, using Faith, Gratitude and Meditation. Those same tools are waiting for you, starting free today.",
+        feats:[{i:'🎧',t:'<strong>Guided Meditation Sessions</strong> — for pain, anxiety, sleep and inner peace'},{i:'🙏',t:'<strong>Daily Gratitude & Faith Practices</strong> — the core of Dr. V\'s recovery method'},{i:'📱',t:'<strong>Available on iOS & Android</strong> — start free, anytime, anywhere'}]}
+    };
+    function pick(){
+      if(tags.indexOf('pain')>-1)return DB.pain;
+      if(tags.indexOf('anxiety')>-1)return DB.anxiety;
+      if(tags.indexOf('sleep')>-1)return DB.sleep;
+      if(tags.indexOf('depleted')>-1)return DB.depleted;
+      if(tags.indexOf('growth')>-1||tags.indexOf('joy')>-1)return DB.growth;
+      return DB.def;
+    }
+    function featsHTML(fs){return fs.map(function(f){return'<div class="qr-feat"><div class="qr-feat-icon">'+f.i+'</div><div style="font-size:0.9rem;line-height:1.6;color:#404040;">'+f.t+'</div></div>';}).join('');}
+    function goStep(n){
+      document.querySelectorAll('.quiz-step').forEach(function(e){e.style.display='none';});
+      var s=document.querySelector('.quiz-step[data-step="'+n+'"]');
+      if(s)s.style.display='block';
+      document.getElementById('quiz-progress').style.width=Math.min(10+Math.round((n-1)/total*90),90)+'%';
+      document.getElementById('quiz-step-label').textContent='QUESTION '+n+' OF '+total;
+      document.getElementById('quiz-restart-btn').style.display=n>1?'block':'none';
+    }
+    function showResult(){
+      document.getElementById('quiz-progress').style.width='100%';
+      document.getElementById('quiz-step-label').textContent='YOUR PERSONALIZED PLAN ✓';
+      document.getElementById('quiz-restart-btn').style.display='block';
+      document.getElementById('quiz-questions').style.display='none';
+      var r=pick();
+      document.getElementById('qr-icon').textContent=r.icon;
+      document.getElementById('qr-title').textContent=r.title;
+      document.getElementById('qr-body').textContent=r.body;
+      document.getElementById('qr-features').innerHTML=featsHTML(r.feats);
+      var res=document.getElementById('quiz-result');
+      res.style.display='block';
+      setTimeout(function(){res.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+    }
+    window.quizRestart=function(){
+      cur=1;tags=[];
+      document.getElementById('quiz-questions').style.display='block';
+      document.getElementById('quiz-result').style.display='none';
+      document.querySelectorAll('.quiz-opt').forEach(function(b){b.classList.remove('selected');});
+      goStep(1);
+      document.getElementById('quiz-card').scrollIntoView({behavior:'smooth',block:'start'});
+    };
+    document.querySelectorAll('.quiz-opt').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        this.closest('.quiz-options').querySelectorAll('.quiz-opt').forEach(function(s){s.classList.remove('selected');});
+        this.classList.add('selected');
+        var tag=this.getAttribute('data-tag');
+        if(tag&&tags.indexOf(tag)===-1)tags.push(tag);
+        var step=parseInt(this.closest('.quiz-step').getAttribute('data-step'));
+        var self=this;
+        setTimeout(function(){
+          if(step<total){cur=step+1;goStep(cur);}
+          else{showResult();}
+        },260);
+      });
+    });
+    goStep(1);
+  })();
+  </script>
+
   <!-- ============ CONTACT ============ -->
   <section id="contact" class="py-24 px-6 bg-white">
     <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-start">
@@ -933,6 +1180,7 @@
             <li><a href="#pillars" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Three Pillars</a></li>
             <li><a href="#books" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Free Books</a></li>
             <li><a href="#app" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Healing App</a></li>
+            <li><a href="#quiz" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Quiz (How Can We Help?)</a></li>
             <li><a href="#blog" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Blog</a></li>
             <li><a href="#contact" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Contact</a></li>
           </ul>
