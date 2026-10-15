@@ -63,6 +63,26 @@ try {
     $author = !empty($data['author']) ? $data['author'] : 'Dr. V';
     $image_url = !empty($data['image_url']) ? trim($data['image_url']) : null;
 
+    // 3b. Enforce non-repeating image rule (at least 40 posts between repetitions)
+    $images_file = __DIR__ . '/wellness_images.json';
+    $image_pool = file_exists($images_file) ? json_decode(file_get_contents($images_file), true) : [];
+
+    // Query images used in the last 40 published posts
+    $stmt_recent = $pdo->query("SELECT image_url FROM posts WHERE image_url IS NOT NULL AND image_url != '' ORDER BY id DESC LIMIT 40");
+    $recent_images = $stmt_recent->fetchAll(PDO::FETCH_COLUMN);
+
+    // If no image provided, or if the provided image was already used in the last 40 posts
+    if (empty($image_url) || in_array($image_url, $recent_images)) {
+        if (!empty($image_pool)) {
+            $available_images = array_values(array_diff($image_pool, $recent_images));
+            if (!empty($available_images)) {
+                $image_url = $available_images[array_rand($available_images)];
+            } else {
+                $image_url = $image_pool[array_rand($image_pool)];
+            }
+        }
+    }
+
     // 4. Insert into database
     $stmt = $pdo->prepare("
         INSERT INTO posts (slug, title, meta_title, meta_description, excerpt, content, category, image_url, tags, reading_time, author, faq_json, status)
