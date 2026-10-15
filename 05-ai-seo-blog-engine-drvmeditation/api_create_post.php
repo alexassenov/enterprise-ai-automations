@@ -63,22 +63,45 @@ try {
     $author = !empty($data['author']) ? $data['author'] : 'Dr. V';
     $image_url = !empty($data['image_url']) ? trim($data['image_url']) : null;
 
-    // 3b. Enforce non-repeating image rule (at least 40 posts between repetitions)
-    $images_file = __DIR__ . '/wellness_images.json';
-    $image_pool = file_exists($images_file) ? json_decode(file_get_contents($images_file), true) : [];
+    // 3b. Enforce strict category matching and 40-post non-repeating image rule
+    $thematic_file = __DIR__ . '/thematic_wellness_images.json';
+    $thematic_pool = file_exists($thematic_file) ? json_decode(file_get_contents($thematic_file), true) : [];
 
     // Query images used in the last 40 published posts
     $stmt_recent = $pdo->query("SELECT image_url FROM posts WHERE image_url IS NOT NULL AND image_url != '' ORDER BY id DESC LIMIT 40");
     $recent_images = $stmt_recent->fetchAll(PDO::FETCH_COLUMN);
 
-    // If no image provided, or if the provided image was already used in the last 40 posts
-    if (empty($image_url) || in_array($image_url, $recent_images)) {
-        if (!empty($image_pool)) {
-            $available_images = array_values(array_diff($image_pool, $recent_images));
+    // Determine relevant category pool based on category and title keywords
+    $title_lower = strtolower($title);
+    $cat_lower = strtolower($category);
+    $matched_pool = [];
+
+    if (strpos($cat_lower, 'sleep') !== false || strpos($title_lower, 'sleep') !== false || strpos($title_lower, 'insomnia') !== false || strpos($title_lower, 'night') !== false) {
+        $matched_pool = $thematic_pool['Sleep & Restorative Healing'] ?? [];
+    } elseif (strpos($cat_lower, 'pain') !== false || strpos($title_lower, 'pain') !== false || strpos($title_lower, 'spine') !== false || strpos($title_lower, 'back') !== false) {
+        $matched_pool = $thematic_pool['Chronic Pain Relief'] ?? [];
+    } elseif (strpos($cat_lower, 'anxiety') !== false || strpos($title_lower, 'anxiety') !== false || strpos($title_lower, 'vagus') !== false || strpos($title_lower, 'panic') !== false || strpos($title_lower, 'nervous') !== false) {
+        $matched_pool = $thematic_pool['Anxiety & Nervous System Calm'] ?? [];
+    } else {
+        $matched_pool = $thematic_pool['Subconscious Healing'] ?? [];
+    }
+
+    // Fallback if specific pool is empty
+    if (empty($matched_pool)) {
+        foreach ($thematic_pool as $sub_pool) {
+            $matched_pool = array_merge($matched_pool, $sub_pool);
+        }
+    }
+
+    // If no image provided, or image was already used in last 40 posts, or image doesn't match the category pool:
+    if (empty($image_url) || in_array($image_url, $recent_images) || (!empty($matched_pool) && !in_array($image_url, $matched_pool))) {
+        if (!empty($matched_pool)) {
+            // Pick an image from the specific category pool that is NOT in the last 40 posts
+            $available_images = array_values(array_diff($matched_pool, $recent_images));
             if (!empty($available_images)) {
                 $image_url = $available_images[array_rand($available_images)];
             } else {
-                $image_url = $image_pool[array_rand($image_pool)];
+                $image_url = $matched_pool[array_rand($matched_pool)];
             }
         }
     }
