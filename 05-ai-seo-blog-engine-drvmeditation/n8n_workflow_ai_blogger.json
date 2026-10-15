@@ -1,1 +1,501 @@
-{"id":"sB7eJsqqUa3uK4d9","name":"Dr. V - Autonomous AI Wellness Blogger","description":null,"active":true,"activeVersionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","createdAt":"2026-10-13T10:09:20.775Z","updatedAt":"2026-10-13T10:38:57.107Z","isArchived":false,"versionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","versionCounter":16,"sourceWorkflowId":null,"triggerCount":2,"nodes":[{"id":"drv-schedule-trigger","name":"Schedule (Every 2 Days)","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[208,304],"parameters":{"rule":{"interval":[{"daysInterval":2}]}}},{"id":"drv-manual-trigger","name":"Manual Trigger","type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[208,480],"parameters":{}},{"id":"drv-topic-selector","name":"Select High-Intent Healing Topic","type":"n8n-nodes-base.code","typeVersion":2,"position":[448,384],"parameters":{"jsCode":"const topics = [\n  {\n    topic: \"How Deep Breathing Deactivates Chronic Pain Signals in the Brain\",\n    category: \"Neuroscience & Pain Relief\",\n    keywords: [\"deep breathing for pain\", \"parasympathetic nervous system\", \"chronic pain meditation\"]\n  },\n  {\n    topic: \"Overcoming Hopelessness: What to Do When Doctors Say Nothing More Can Be Done\",\n    category: \"Mindset & Resilience\",\n    keywords: [\"healing mindset\", \"overcoming despair\", \"Dr V Three Pillars\"]\n  },\n  {\n    topic: \"Guided Sleep Journeys: How to Break Nighttime Pain Cycles and Insomnia\",\n    category: \"Sleep & Restorative Healing\",\n    keywords: [\"sleep meditation for chronic pain\", \"healing insomnia naturally\", \"restorative sleep\"]\n  },\n  {\n    topic: \"Rewiring the Subconscious Mind: Breaking Free from the Trauma of Immobility\",\n    category: \"Subconscious Reprogramming\",\n    keywords: [\"subconscious reprogramming\", \"emotional recovery\", \"mind over illness\"]\n  },\n  {\n    topic: \"Faith as a Biological Catalyst: The Placebo Effect Taken to Its Clinical Extreme\",\n    category: \"Faith & Biological Recovery\",\n    keywords: [\"placebo effect healing\", \"power of belief in medicine\", \"faith and health\"]\n  }\n];\n\nconst selected = topics[Math.floor(Math.random() * topics.length)];\n\nconst fullPrompt = \"You are Dr. V — a medical doctor and author of Self-Healing: The Road to Recovery and The Three Pillars of Self-Healing.\\n\" +\n  \"You survived an L5 spinal fracture, 2 failed surgeries, and were told you would remain paralyzed in a wheelchair.\\n\" +\n  \"Through Faith, Gratitude, and Meditation, you broke the pain loop and healed.\\n\\n\" +\n  \"Write an authoritative 1500-word article on:\\n\" +\n  \"Topic: \" + selected.topic + \"\\n\" +\n  \"Category: \" + selected.category + \"\\n\" +\n  \"Keywords: \" + selected.keywords.join(\", \") + \"\\n\\n\" +\n  \"Output strictly valid raw JSON without markdown formatting:\\n\" +\n  \"{\\n\" +\n  '  \\\"title\\\": \\\"Title under 65 chars\\\",\\n' +\n  '  \\\"slug\\\": \\\"clean-english-url-slug\\\",\\n' +\n  '  \\\"category\\\": \\\"' + selected.category + '\\\",\\n' +\n  '  \\\"meta_title\\\": \\\"SEO title\\\",\\n' +\n  '  \\\"meta_description\\\": \\\"SEO snippet\\\",\\n' +\n  '  \\\"excerpt\\\": \\\"2-sentence summary\\\",\\n' +\n  '  \\\"content\\\": \\\"<p>Article in semantic HTML using h2, h3, p, blockquote, ul, li...</p>\\\",\\n' +\n  '  \\\"faq_json\\\": [{\\\"q\\\": \\\"Question 1?\\\", \\\"a\\\": \\\"Answer 1\\\"}]\\n' +\n  \"}\";\n\nreturn [{\n  json: {\n    ...selected,\n    fullPrompt: fullPrompt\n  }\n}];"}},{"id":"drv-ai-writer","name":"Dr. V AI Content Engine","type":"@n8n/n8n-nodes-langchain.openAi","typeVersion":2.3,"position":[608,384],"parameters":{"modelId":{"__rl":true,"value":"gemini-3.8-flash-low","mode":"id"},"responses":{"values":[{"content":"={{ $json.fullPrompt }}"}]},"builtInTools":{},"options":{"parallelToolCalls":false}},"credentials":{"openAiApi":{"id":"L21ElGepVbAzKPOh","name":"OpenAI account 2"}}},{"id":"drv-json-parser","name":"Parse & Sanitize AI JSON","type":"n8n-nodes-base.code","typeVersion":2,"position":[928,384],"parameters":{"jsCode":"let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {};\n}\n\nlet original = {};\ntry {\n  original = $('Select High-Intent Healing Topic').item.json || {};\n} catch (e) {}\n\nconst title = parsed.title || 'Healing Through Awareness: The Three Pillars Method';\nconst category = parsed.category || original.category || 'Healing & Mindfulness';\nconst slug = parsed.slug || ('healing-article-' + Date.now());\nconst meta_title = parsed.meta_title || (title + ' | Dr. V Healing');\nconst meta_description = parsed.meta_description || parsed.excerpt || 'Learn how to heal using Faith, Gratitude, and Meditation.';\nconst excerpt = parsed.excerpt || meta_description;\nconst content = parsed.content || '<p>Recovery begins in the mind before it manifests in tissue.</p>';\nconst faq_json = parsed.faq_json || [];\n\nreturn {\n  json: {\n    title: title,\n    slug: slug,\n    category: category,\n    meta_title: meta_title,\n    meta_description: meta_description,\n    excerpt: excerpt,\n    content: content,\n    faq_json: faq_json\n  }\n};"}},{"id":"drv-http-publisher","name":"Publish to Dr. V Blog API","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1168,384],"parameters":{"method":"POST","url":"https://drvmeditation.com/api_create_post.php","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Authorization","value":"Bearer drv_healing_blog_secret_2026"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify($json) }}","options":{}}},{"id":"drv-webhook-trigger","name":"Webhook Trigger (Run On Demand)","webhookId":"drv-trigger-blog","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[208,144],"parameters":{"path":"drv-trigger-blog","options":{}}}],"connections":{"Schedule (Every 2 Days)":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]},"Manual Trigger":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]},"Select High-Intent Healing Topic":{"main":[[{"node":"Dr. V AI Content Engine","type":"main","index":0}]]},"Dr. V AI Content Engine":{"main":[[{"node":"Parse & Sanitize AI JSON","type":"main","index":0}]]},"Parse & Sanitize AI JSON":{"main":[[{"node":"Publish to Dr. V Blog API","type":"main","index":0}]]},"Webhook Trigger (Run On Demand)":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]}},"nodeGroups":[],"settings":{"executionOrder":"v1","binaryMode":"separate"},"staticData":{"node:Schedule (Every 2 Days)":{"recurrenceRules":[null],"recurrenceRuleSignatures":["days:2"]}},"pinData":{},"meta":null,"tags":[],"shared":[{"role":"workflow:owner","workflowId":"sB7eJsqqUa3uK4d9","projectId":"2aqhqfpnie4eg81l","project":{"id":"2aqhqfpnie4eg81l","name":"Lexmation EOOD <lex.mation2026@gmail.com>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"1af9ab7e-9c7d-489d-aca9-9ba59edf25da","createdAt":"2026-06-23T11:05:36.196Z","updatedAt":"2026-06-24T17:09:53.950Z"},"createdAt":"2026-10-13T10:09:20.780Z","updatedAt":"2026-10-13T10:09:20.780Z"}],"activeVersion":{"versionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","workflowId":"sB7eJsqqUa3uK4d9","nodes":[{"id":"drv-schedule-trigger","name":"Schedule (Every 2 Days)","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[208,304],"parameters":{"rule":{"interval":[{"daysInterval":2}]}}},{"id":"drv-manual-trigger","name":"Manual Trigger","type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[208,480],"parameters":{}},{"id":"drv-topic-selector","name":"Select High-Intent Healing Topic","type":"n8n-nodes-base.code","typeVersion":2,"position":[448,384],"parameters":{"jsCode":"const topics = [\n  {\n    topic: \"How Deep Breathing Deactivates Chronic Pain Signals in the Brain\",\n    category: \"Neuroscience & Pain Relief\",\n    keywords: [\"deep breathing for pain\", \"parasympathetic nervous system\", \"chronic pain meditation\"]\n  },\n  {\n    topic: \"Overcoming Hopelessness: What to Do When Doctors Say Nothing More Can Be Done\",\n    category: \"Mindset & Resilience\",\n    keywords: [\"healing mindset\", \"overcoming despair\", \"Dr V Three Pillars\"]\n  },\n  {\n    topic: \"Guided Sleep Journeys: How to Break Nighttime Pain Cycles and Insomnia\",\n    category: \"Sleep & Restorative Healing\",\n    keywords: [\"sleep meditation for chronic pain\", \"healing insomnia naturally\", \"restorative sleep\"]\n  },\n  {\n    topic: \"Rewiring the Subconscious Mind: Breaking Free from the Trauma of Immobility\",\n    category: \"Subconscious Reprogramming\",\n    keywords: [\"subconscious reprogramming\", \"emotional recovery\", \"mind over illness\"]\n  },\n  {\n    topic: \"Faith as a Biological Catalyst: The Placebo Effect Taken to Its Clinical Extreme\",\n    category: \"Faith & Biological Recovery\",\n    keywords: [\"placebo effect healing\", \"power of belief in medicine\", \"faith and health\"]\n  }\n];\n\nconst selected = topics[Math.floor(Math.random() * topics.length)];\n\nconst fullPrompt = \"You are Dr. V — a medical doctor and author of Self-Healing: The Road to Recovery and The Three Pillars of Self-Healing.\\n\" +\n  \"You survived an L5 spinal fracture, 2 failed surgeries, and were told you would remain paralyzed in a wheelchair.\\n\" +\n  \"Through Faith, Gratitude, and Meditation, you broke the pain loop and healed.\\n\\n\" +\n  \"Write an authoritative 1500-word article on:\\n\" +\n  \"Topic: \" + selected.topic + \"\\n\" +\n  \"Category: \" + selected.category + \"\\n\" +\n  \"Keywords: \" + selected.keywords.join(\", \") + \"\\n\\n\" +\n  \"Output strictly valid raw JSON without markdown formatting:\\n\" +\n  \"{\\n\" +\n  '  \\\"title\\\": \\\"Title under 65 chars\\\",\\n' +\n  '  \\\"slug\\\": \\\"clean-english-url-slug\\\",\\n' +\n  '  \\\"category\\\": \\\"' + selected.category + '\\\",\\n' +\n  '  \\\"meta_title\\\": \\\"SEO title\\\",\\n' +\n  '  \\\"meta_description\\\": \\\"SEO snippet\\\",\\n' +\n  '  \\\"excerpt\\\": \\\"2-sentence summary\\\",\\n' +\n  '  \\\"content\\\": \\\"<p>Article in semantic HTML using h2, h3, p, blockquote, ul, li...</p>\\\",\\n' +\n  '  \\\"faq_json\\\": [{\\\"q\\\": \\\"Question 1?\\\", \\\"a\\\": \\\"Answer 1\\\"}]\\n' +\n  \"}\";\n\nreturn [{\n  json: {\n    ...selected,\n    fullPrompt: fullPrompt\n  }\n}];"}},{"id":"drv-ai-writer","name":"Dr. V AI Content Engine","type":"@n8n/n8n-nodes-langchain.openAi","typeVersion":2.3,"position":[608,384],"parameters":{"modelId":{"__rl":true,"value":"gemini-3.8-flash-low","mode":"id"},"responses":{"values":[{"content":"={{ $json.fullPrompt }}"}]},"builtInTools":{},"options":{"parallelToolCalls":false}},"credentials":{"openAiApi":{"id":"L21ElGepVbAzKPOh","name":"OpenAI account 2"}}},{"id":"drv-json-parser","name":"Parse & Sanitize AI JSON","type":"n8n-nodes-base.code","typeVersion":2,"position":[928,384],"parameters":{"jsCode":"let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {};\n}\n\nlet original = {};\ntry {\n  original = $('Select High-Intent Healing Topic').item.json || {};\n} catch (e) {}\n\nconst title = parsed.title || 'Healing Through Awareness: The Three Pillars Method';\nconst category = parsed.category || original.category || 'Healing & Mindfulness';\nconst slug = parsed.slug || ('healing-article-' + Date.now());\nconst meta_title = parsed.meta_title || (title + ' | Dr. V Healing');\nconst meta_description = parsed.meta_description || parsed.excerpt || 'Learn how to heal using Faith, Gratitude, and Meditation.';\nconst excerpt = parsed.excerpt || meta_description;\nconst content = parsed.content || '<p>Recovery begins in the mind before it manifests in tissue.</p>';\nconst faq_json = parsed.faq_json || [];\n\nreturn {\n  json: {\n    title: title,\n    slug: slug,\n    category: category,\n    meta_title: meta_title,\n    meta_description: meta_description,\n    excerpt: excerpt,\n    content: content,\n    faq_json: faq_json\n  }\n};"}},{"id":"drv-http-publisher","name":"Publish to Dr. V Blog API","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1168,384],"parameters":{"method":"POST","url":"https://drvmeditation.com/api_create_post.php","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Authorization","value":"Bearer drv_healing_blog_secret_2026"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify($json) }}","options":{}}},{"id":"drv-webhook-trigger","name":"Webhook Trigger (Run On Demand)","webhookId":"drv-trigger-blog","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[208,144],"parameters":{"path":"drv-trigger-blog","options":{}}}],"connections":{"Schedule (Every 2 Days)":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]},"Manual Trigger":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]},"Select High-Intent Healing Topic":{"main":[[{"node":"Dr. V AI Content Engine","type":"main","index":0}]]},"Dr. V AI Content Engine":{"main":[[{"node":"Parse & Sanitize AI JSON","type":"main","index":0}]]},"Parse & Sanitize AI JSON":{"main":[[{"node":"Publish to Dr. V Blog API","type":"main","index":0}]]},"Webhook Trigger (Run On Demand)":{"main":[[{"node":"Select High-Intent Healing Topic","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Lexmation EOOD","name":null,"description":null,"autosaved":false,"createdAt":"2026-10-13T10:38:57.108Z","updatedAt":"2026-10-13T10:38:57.108Z","workflowPublishHistory":[{"id":193,"workflowId":"sB7eJsqqUa3uK4d9","versionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","event":"activated","userId":"1af9ab7e-9c7d-489d-aca9-9ba59edf25da","createdAt":"2026-10-13T10:38:57.252Z"},{"id":194,"workflowId":"sB7eJsqqUa3uK4d9","versionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","event":"deactivated","userId":"1af9ab7e-9c7d-489d-aca9-9ba59edf25da","createdAt":"2026-10-13T10:38:57.408Z"},{"id":195,"workflowId":"sB7eJsqqUa3uK4d9","versionId":"da3f7f52-2ca6-443d-82ac-9e0603f5753d","event":"activated","userId":"1af9ab7e-9c7d-489d-aca9-9ba59edf25da","createdAt":"2026-10-13T10:38:57.595Z"}]}}
+{
+  "id": "sB7eJsqqUa3uK4d9",
+  "name": "Dr. V - Autonomous AI Wellness Blogger",
+  "description": null,
+  "active": true,
+  "activeVersionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+  "createdAt": "2026-10-13T10:09:20.775Z",
+  "updatedAt": "2026-10-15T05:45:57.692Z",
+  "isArchived": false,
+  "versionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+  "versionCounter": 18,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "drv-schedule-trigger",
+      "name": "Schedule (Every 2 Days)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        304
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "drv-manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        480
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "drv-topic-selector",
+      "name": "Select High-Intent Healing Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        384
+      ],
+      "parameters": {
+        "jsCode": "const topics = [\n  // 1. Chronic Pain Relief\n  {\n    topic: \"How Deep Diaphragmatic Breathing Deactivates Chronic Pain Signals in the Spine\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"chronic pain relief\", \"lumbar spine pain\", \"parasympathetic nervous system\", \"Dr V Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Breaking Free from Somatic Guarding: How Fear Amplifies Chronic Muscle Pain\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"somatic pain\", \"chronic pain cycle\", \"muscle tension relief\", \"pain neuroplasticity\"],\n    image_url: \"https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Neuroplasticity and Nerve Regeneration: How the Brain Overcomes Chronic Nerve Distress\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"nerve pain meditation\", \"neuroplastic healing\", \"spine recovery\", \"Faith in recovery\"],\n    image_url: \"https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Unlocking Spinal Mobility: Mind-Body Approaches to Severe Lower Back Pain\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"lower back pain relief\", \"spinal alignment meditation\", \"overcoming disc injury\", \"Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1552196563-552328b9d36a?auto=format&fit=crop&w=1200&q=80\"\n  },\n\n  // 2. Anxiety & Nervous System Calm\n  {\n    topic: \"Calming the Amygdala: A Medical Doctor's Guide to Halting Anxiety Panics Naturally\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"anxiety relief\", \"vagus nerve activation\", \"stopping panic attacks\", \"mindfulness for anxiety\"],\n    image_url: \"https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"The Vagus Nerve Reset: 3 Daily Exercises to Shift from Fight-or-Flight to Healing\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"vagus nerve exercises\", \"calm nervous system\", \"stress reduction\", \"morning anxiety\"],\n    image_url: \"https://images.unsplash.com/photo-1511295742362-92c96b124e52?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Quieting the Overactive Mind: How Guided Meditation Restores Inner Silence\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"racing thoughts meditation\", \"overcoming mental exhaustion\", \"guided stillness\", \"Dr V Healing App\"],\n    image_url: \"https://images.unsplash.com/photo-1470847355775-e0e3c35a9a2c?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Somatic Grounding for High Anxiety: Restoring Balance to an Overwhelmed Nervous System\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"somatic grounding\", \"nervous system regulation\", \"emotional release\", \"breathwork for calm\"],\n    image_url: \"https://images.unsplash.com/photo-1508672019048-805b876b67e2?auto=format&fit=crop&w=1200&q=80\"\n  },\n\n  // 3. Subconscious Healing & Reprogramming\n  {\n    topic: \"Reprogramming Subconscious Beliefs: Erasing the Silent Identity of Disability and Illness\",\n    category: \"Subconscious Healing\",\n    keywords: [\"subconscious reprogramming\", \"identity shift\", \"healing affirmations\", \"neuroplasticity\"],\n    image_url: \"https://images.unsplash.com/photo-1519834785169-98be25ec3f84?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"The Power of Mental Rehearsal: How Visualizing Movement Activates Real Neurological Repair\",\n    category: \"Subconscious Healing\",\n    keywords: [\"visualization healing\", \"mental rehearsal recovery\", \"Dr V Three Pillars\", \"walking again\"],\n    image_url: \"https://images.unsplash.com/photo-1515023115689-589c33041d3c?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Subconscious Fear vs. Inner Faith: Silencing the Negative Internal Dialogue That Delays Healing\",\n    category: \"Subconscious Healing\",\n    keywords: [\"inner voice meditation\", \"overcoming subconscious doubt\", \"faith in healing\", \"Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Accessing Theta Brainwaves: How Deep Relaxation Rewires Deep-Seated Physical Trauma\",\n    category: \"Subconscious Healing\",\n    keywords: [\"theta brainwaves\", \"subconscious mind healing\", \"neuroplastic rewiring\", \"deep relaxation\"],\n    image_url: \"https://images.unsplash.com/photo-1447452001602-7090c7ab2db3?auto=format&fit=crop&w=1200&q=80\"\n  }\n];\n\nconst selected = topics[Math.floor(Math.random() * topics.length)];\n\nconst fullPrompt = \"You are Dr. V \u2014 a medical doctor and author of Self-Healing: The Road to Recovery and The Three Pillars of Self-Healing.\\n\" +\n  \"You survived a catastrophic L5 lumbar vertebra injury, endured 2 failed surgeries, and were told by neurosurgeons you would remain crippled in a wheelchair.\\n\" +\n  \"Through Faith, Gratitude, and Meditation, you rewired your subconscious mind and fully recovered.\\n\\n\" +\n  \"Write an authoritative, compassionate, 1500-word article on:\\n\" +\n  \"Topic: \" + selected.topic + \"\\n\" +\n  \"Category: \" + selected.category + \"\\n\" +\n  \"Keywords: \" + selected.keywords.join(\", \") + \"\\n\\n\" +\n  \"Output strictly valid raw JSON without markdown formatting:\\n\" +\n  \"{\\n\" +\n  '  \\\"title\\\": \\\"Title under 65 chars\\\",\\n' +\n  '  \\\"slug\\\": \\\"clean-english-url-slug\\\",\\n' +\n  '  \\\"category\\\": \\\"' + selected.category + '\\\",\\n' +\n  '  \\\"meta_title\\\": \\\"SEO title under 60 chars\\\",\\n' +\n  '  \\\"meta_description\\\": \\\"SEO snippet under 155 chars\\\",\\n' +\n  '  \\\"excerpt\\\": \\\"2-sentence summary under 200 chars\\\",\\n' +\n  '  \\\"content\\\": \\\"<p>Full article in semantic HTML using h2, h3, p, blockquote, ul, li...</p>\\\",\\n' +\n  '  \\\"faq_json\\\": [{\\\"q\\\": \\\"Question 1?\\\", \\\"a\\\": \\\"Answer 1\\\"}]\\n' +\n  \"}\";\n\nreturn [{\n  json: {\n    ...selected,\n    fullPrompt: fullPrompt\n  }\n}];"
+      }
+    },
+    {
+      "id": "drv-ai-writer",
+      "name": "Dr. V AI Content Engine",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        384
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-3.8-flash-low",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.fullPrompt }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "parallelToolCalls": false
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "id": "drv-json-parser",
+      "name": "Parse & Sanitize AI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        384
+      ],
+      "parameters": {
+        "jsCode": "let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    try {\n      parsed = JSON.parse(match[0]);\n    } catch (e2) {\n      parsed = {};\n    }\n  }\n}\n\nlet original = {};\ntry {\n  original = $('Select High-Intent Healing Topic').item.json || {};\n} catch (e) {}\n\nconst title = parsed.title || 'Healing Through Awareness: The Three Pillars Method';\nconst category = parsed.category || original.category || 'Chronic Pain Relief';\nconst slug = parsed.slug || ('healing-insight-' + Date.now());\nconst meta_title = parsed.meta_title || (title + ' | Dr. V Healing');\nconst meta_description = parsed.meta_description || parsed.excerpt || 'Learn how to heal through Faith, Gratitude, and Meditation.';\nconst excerpt = parsed.excerpt || meta_description;\nconst content = parsed.content || '<p>Recovery begins in the mind before it manifests in tissue.</p>';\nconst faq_json = parsed.faq_json || [];\nconst image_url = original.image_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80';\n\nreturn {\n  json: {\n    title: title,\n    slug: slug,\n    category: category,\n    image_url: image_url,\n    meta_title: meta_title,\n    meta_description: meta_description,\n    excerpt: excerpt,\n    content: content,\n    faq_json: faq_json\n  }\n};"
+      }
+    },
+    {
+      "id": "drv-http-publisher",
+      "name": "Publish to Dr. V Blog API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        384
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://drvmeditation.com/api_create_post.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drv_healing_blog_secret_2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "drv-webhook-trigger",
+      "name": "Webhook Trigger (Run On Demand)",
+      "webhookId": "drv-trigger-blog",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        144
+      ],
+      "parameters": {
+        "path": "drv-trigger-blog",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule (Every 2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Select High-Intent Healing Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Select High-Intent Healing Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select High-Intent Healing Topic": {
+      "main": [
+        [
+          {
+            "node": "Dr. V AI Content Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dr. V AI Content Engine": {
+      "main": [
+        [
+          {
+            "node": "Parse & Sanitize AI JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Sanitize AI JSON": {
+      "main": [
+        [
+          {
+            "node": "Publish to Dr. V Blog API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (Run On Demand)": {
+      "main": [
+        [
+          {
+            "node": "Select High-Intent Healing Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:Schedule (Every 2 Days)": {
+      "recurrenceRules": [
+        287
+      ],
+      "recurrenceRuleSignatures": [
+        "days:2"
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "sB7eJsqqUa3uK4d9",
+      "projectId": "2aqhqfpnie4eg81l",
+      "project": {
+        "id": "2aqhqfpnie4eg81l",
+        "name": "Lexmation EOOD <lex.mation2026@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-06-23T11:05:36.196Z",
+        "updatedAt": "2026-06-24T17:09:53.950Z"
+      },
+      "createdAt": "2026-10-13T10:09:20.780Z",
+      "updatedAt": "2026-10-13T10:09:20.780Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+    "workflowId": "sB7eJsqqUa3uK4d9",
+    "nodes": [
+      {
+        "id": "drv-schedule-trigger",
+        "name": "Schedule (Every 2 Days)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          208,
+          304
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "daysInterval": 2
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "drv-manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          208,
+          480
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "drv-topic-selector",
+        "name": "Select High-Intent Healing Topic",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          384
+        ],
+        "parameters": {
+          "jsCode": "const topics = [\n  // 1. Chronic Pain Relief\n  {\n    topic: \"How Deep Diaphragmatic Breathing Deactivates Chronic Pain Signals in the Spine\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"chronic pain relief\", \"lumbar spine pain\", \"parasympathetic nervous system\", \"Dr V Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Breaking Free from Somatic Guarding: How Fear Amplifies Chronic Muscle Pain\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"somatic pain\", \"chronic pain cycle\", \"muscle tension relief\", \"pain neuroplasticity\"],\n    image_url: \"https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Neuroplasticity and Nerve Regeneration: How the Brain Overcomes Chronic Nerve Distress\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"nerve pain meditation\", \"neuroplastic healing\", \"spine recovery\", \"Faith in recovery\"],\n    image_url: \"https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Unlocking Spinal Mobility: Mind-Body Approaches to Severe Lower Back Pain\",\n    category: \"Chronic Pain Relief\",\n    keywords: [\"lower back pain relief\", \"spinal alignment meditation\", \"overcoming disc injury\", \"Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1552196563-552328b9d36a?auto=format&fit=crop&w=1200&q=80\"\n  },\n\n  // 2. Anxiety & Nervous System Calm\n  {\n    topic: \"Calming the Amygdala: A Medical Doctor's Guide to Halting Anxiety Panics Naturally\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"anxiety relief\", \"vagus nerve activation\", \"stopping panic attacks\", \"mindfulness for anxiety\"],\n    image_url: \"https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"The Vagus Nerve Reset: 3 Daily Exercises to Shift from Fight-or-Flight to Healing\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"vagus nerve exercises\", \"calm nervous system\", \"stress reduction\", \"morning anxiety\"],\n    image_url: \"https://images.unsplash.com/photo-1511295742362-92c96b124e52?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Quieting the Overactive Mind: How Guided Meditation Restores Inner Silence\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"racing thoughts meditation\", \"overcoming mental exhaustion\", \"guided stillness\", \"Dr V Healing App\"],\n    image_url: \"https://images.unsplash.com/photo-1470847355775-e0e3c35a9a2c?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Somatic Grounding for High Anxiety: Restoring Balance to an Overwhelmed Nervous System\",\n    category: \"Anxiety & Nervous System Calm\",\n    keywords: [\"somatic grounding\", \"nervous system regulation\", \"emotional release\", \"breathwork for calm\"],\n    image_url: \"https://images.unsplash.com/photo-1508672019048-805b876b67e2?auto=format&fit=crop&w=1200&q=80\"\n  },\n\n  // 3. Subconscious Healing & Reprogramming\n  {\n    topic: \"Reprogramming Subconscious Beliefs: Erasing the Silent Identity of Disability and Illness\",\n    category: \"Subconscious Healing\",\n    keywords: [\"subconscious reprogramming\", \"identity shift\", \"healing affirmations\", \"neuroplasticity\"],\n    image_url: \"https://images.unsplash.com/photo-1519834785169-98be25ec3f84?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"The Power of Mental Rehearsal: How Visualizing Movement Activates Real Neurological Repair\",\n    category: \"Subconscious Healing\",\n    keywords: [\"visualization healing\", \"mental rehearsal recovery\", \"Dr V Three Pillars\", \"walking again\"],\n    image_url: \"https://images.unsplash.com/photo-1515023115689-589c33041d3c?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Subconscious Fear vs. Inner Faith: Silencing the Negative Internal Dialogue That Delays Healing\",\n    category: \"Subconscious Healing\",\n    keywords: [\"inner voice meditation\", \"overcoming subconscious doubt\", \"faith in healing\", \"Three Pillars\"],\n    image_url: \"https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?auto=format&fit=crop&w=1200&q=80\"\n  },\n  {\n    topic: \"Accessing Theta Brainwaves: How Deep Relaxation Rewires Deep-Seated Physical Trauma\",\n    category: \"Subconscious Healing\",\n    keywords: [\"theta brainwaves\", \"subconscious mind healing\", \"neuroplastic rewiring\", \"deep relaxation\"],\n    image_url: \"https://images.unsplash.com/photo-1447452001602-7090c7ab2db3?auto=format&fit=crop&w=1200&q=80\"\n  }\n];\n\nconst selected = topics[Math.floor(Math.random() * topics.length)];\n\nconst fullPrompt = \"You are Dr. V \u2014 a medical doctor and author of Self-Healing: The Road to Recovery and The Three Pillars of Self-Healing.\\n\" +\n  \"You survived a catastrophic L5 lumbar vertebra injury, endured 2 failed surgeries, and were told by neurosurgeons you would remain crippled in a wheelchair.\\n\" +\n  \"Through Faith, Gratitude, and Meditation, you rewired your subconscious mind and fully recovered.\\n\\n\" +\n  \"Write an authoritative, compassionate, 1500-word article on:\\n\" +\n  \"Topic: \" + selected.topic + \"\\n\" +\n  \"Category: \" + selected.category + \"\\n\" +\n  \"Keywords: \" + selected.keywords.join(\", \") + \"\\n\\n\" +\n  \"Output strictly valid raw JSON without markdown formatting:\\n\" +\n  \"{\\n\" +\n  '  \\\"title\\\": \\\"Title under 65 chars\\\",\\n' +\n  '  \\\"slug\\\": \\\"clean-english-url-slug\\\",\\n' +\n  '  \\\"category\\\": \\\"' + selected.category + '\\\",\\n' +\n  '  \\\"meta_title\\\": \\\"SEO title under 60 chars\\\",\\n' +\n  '  \\\"meta_description\\\": \\\"SEO snippet under 155 chars\\\",\\n' +\n  '  \\\"excerpt\\\": \\\"2-sentence summary under 200 chars\\\",\\n' +\n  '  \\\"content\\\": \\\"<p>Full article in semantic HTML using h2, h3, p, blockquote, ul, li...</p>\\\",\\n' +\n  '  \\\"faq_json\\\": [{\\\"q\\\": \\\"Question 1?\\\", \\\"a\\\": \\\"Answer 1\\\"}]\\n' +\n  \"}\";\n\nreturn [{\n  json: {\n    ...selected,\n    fullPrompt: fullPrompt\n  }\n}];"
+        }
+      },
+      {
+        "id": "drv-ai-writer",
+        "name": "Dr. V AI Content Engine",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.3,
+        "position": [
+          608,
+          384
+        ],
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gemini-3.8-flash-low",
+            "mode": "id"
+          },
+          "responses": {
+            "values": [
+              {
+                "content": "={{ $json.fullPrompt }}"
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {
+            "parallelToolCalls": false
+          }
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "L21ElGepVbAzKPOh",
+            "name": "OpenAI account 2"
+          }
+        }
+      },
+      {
+        "id": "drv-json-parser",
+        "name": "Parse & Sanitize AI JSON",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          928,
+          384
+        ],
+        "parameters": {
+          "jsCode": "let text = '';\nif ($input.item.json.output && $input.item.json.output[0] && $input.item.json.output[0].content) {\n  text = $input.item.json.output[0].content[0].text || '';\n} else if ($input.item.json.text) {\n  text = $input.item.json.text;\n} else if (typeof $input.item.json === 'string') {\n  text = $input.item.json;\n} else {\n  text = JSON.stringify($input.item.json);\n}\n\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    try {\n      parsed = JSON.parse(match[0]);\n    } catch (e2) {\n      parsed = {};\n    }\n  }\n}\n\nlet original = {};\ntry {\n  original = $('Select High-Intent Healing Topic').item.json || {};\n} catch (e) {}\n\nconst title = parsed.title || 'Healing Through Awareness: The Three Pillars Method';\nconst category = parsed.category || original.category || 'Chronic Pain Relief';\nconst slug = parsed.slug || ('healing-insight-' + Date.now());\nconst meta_title = parsed.meta_title || (title + ' | Dr. V Healing');\nconst meta_description = parsed.meta_description || parsed.excerpt || 'Learn how to heal through Faith, Gratitude, and Meditation.';\nconst excerpt = parsed.excerpt || meta_description;\nconst content = parsed.content || '<p>Recovery begins in the mind before it manifests in tissue.</p>';\nconst faq_json = parsed.faq_json || [];\nconst image_url = original.image_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80';\n\nreturn {\n  json: {\n    title: title,\n    slug: slug,\n    category: category,\n    image_url: image_url,\n    meta_title: meta_title,\n    meta_description: meta_description,\n    excerpt: excerpt,\n    content: content,\n    faq_json: faq_json\n  }\n};"
+        }
+      },
+      {
+        "id": "drv-http-publisher",
+        "name": "Publish to Dr. V Blog API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1168,
+          384
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://drvmeditation.com/api_create_post.php",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer drv_healing_blog_secret_2026"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "drv-webhook-trigger",
+        "name": "Webhook Trigger (Run On Demand)",
+        "webhookId": "drv-trigger-blog",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          208,
+          144
+        ],
+        "parameters": {
+          "path": "drv-trigger-blog",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule (Every 2 Days)": {
+        "main": [
+          [
+            {
+              "node": "Select High-Intent Healing Topic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Select High-Intent Healing Topic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select High-Intent Healing Topic": {
+        "main": [
+          [
+            {
+              "node": "Dr. V AI Content Engine",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dr. V AI Content Engine": {
+        "main": [
+          [
+            {
+              "node": "Parse & Sanitize AI JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse & Sanitize AI JSON": {
+        "main": [
+          [
+            {
+              "node": "Publish to Dr. V Blog API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger (Run On Demand)": {
+        "main": [
+          [
+            {
+              "node": "Select High-Intent Healing Topic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Lexmation EOOD",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-15T05:45:57.694Z",
+    "updatedAt": "2026-10-15T05:45:57.694Z",
+    "workflowPublishHistory": [
+      {
+        "id": 201,
+        "workflowId": "sB7eJsqqUa3uK4d9",
+        "versionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+        "event": "activated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-15T05:45:57.810Z"
+      },
+      {
+        "id": 202,
+        "workflowId": "sB7eJsqqUa3uK4d9",
+        "versionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+        "event": "deactivated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-15T05:45:57.893Z"
+      },
+      {
+        "id": 203,
+        "workflowId": "sB7eJsqqUa3uK4d9",
+        "versionId": "d0499d78-4e70-4d33-a825-e0a5702b5beb",
+        "event": "activated",
+        "userId": "1af9ab7e-9c7d-489d-aca9-9ba59edf25da",
+        "createdAt": "2026-10-15T05:45:58.048Z"
+      }
+    ]
+  }
+}

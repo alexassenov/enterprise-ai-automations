@@ -61,11 +61,12 @@ try {
 
     $faq_json = !empty($data['faq_json']) ? (is_string($data['faq_json']) ? $data['faq_json'] : json_encode($data['faq_json'])) : null;
     $author = !empty($data['author']) ? $data['author'] : 'Dr. V';
+    $image_url = !empty($data['image_url']) ? trim($data['image_url']) : null;
 
     // 4. Insert into database
     $stmt = $pdo->prepare("
-        INSERT INTO posts (slug, title, meta_title, meta_description, excerpt, content, category, tags, reading_time, author, faq_json, status)
-        VALUES (:slug, :title, :meta_title, :meta_description, :excerpt, :content, :category, :tags, :reading_time, :author, :faq_json, 'published')
+        INSERT INTO posts (slug, title, meta_title, meta_description, excerpt, content, category, image_url, tags, reading_time, author, faq_json, status)
+        VALUES (:slug, :title, :meta_title, :meta_description, :excerpt, :content, :category, :image_url, :tags, :reading_time, :author, :faq_json, 'published')
     ");
 
     $stmt->execute([
@@ -76,6 +77,7 @@ try {
         ':excerpt' => $excerpt,
         ':content' => $content,
         ':category' => $category,
+        ':image_url' => $image_url,
         ':tags' => $tags,
         ':reading_time' => $reading_time,
         ':author' => $author,

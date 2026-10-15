@@ -9,7 +9,7 @@ try {
     $selected_cat = isset($_GET['cat']) ? trim($_GET['cat']) : '';
     $search = isset($_GET['q']) ? trim($_GET['q']) : '';
 
-    $sql = "SELECT id, slug, title, excerpt, category, reading_time, created_at FROM posts WHERE status = 'published'";
+    $sql = "SELECT id, slug, title, excerpt, category, image_url, reading_time, created_at FROM posts WHERE status = 'published'";
     $params = [];
 
     if (!empty($selected_cat)) {
@@ -128,12 +128,21 @@ try {
           <article class="bg-white rounded-2xl overflow-hidden border border-purple-50/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-200 flex flex-col justify-between">
             <div>
               <!-- Visual Card Header -->
-              <div class="h-44 p-6 flex items-center justify-center text-center relative overflow-hidden" style="background:linear-gradient(135deg, <?= $idx % 2 == 0 ? 'rgba(114,114,187,0.12), rgba(0,157,138,0.1)' : 'rgba(0,157,138,0.12), rgba(114,114,187,0.1)' ?>);">
-                <div class="relative z-10">
-                  <span class="text-4xl block mb-2"><?= $idx % 3 == 0 ? '🧘' : ($idx % 3 == 1 ? '🙏' : '💫') ?></span>
-                  <span class="text-xs uppercase font-bold tracking-wider" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;"><?= htmlspecialchars($post['category']) ?></span>
+              <?php if (!empty($post['image_url'])): ?>
+                <div class="h-48 overflow-hidden relative">
+                  <img src="<?= htmlspecialchars($post['image_url']) ?>" alt="<?= htmlspecialchars($post['title']) ?>" class="w-full h-full object-cover transition duration-300 hover:scale-105" loading="lazy">
+                  <span class="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;">
+                    <?= htmlspecialchars($post['category']) ?>
+                  </span>
                 </div>
-              </div>
+              <?php else: ?>
+                <div class="h-44 p-6 flex items-center justify-center text-center relative overflow-hidden" style="background:linear-gradient(135deg, <?= $idx % 2 == 0 ? 'rgba(114,114,187,0.12), rgba(0,157,138,0.1)' : 'rgba(0,157,138,0.12), rgba(114,114,187,0.1)' ?>);">
+                  <div class="relative z-10">
+                    <span class="text-4xl block mb-2"><?= $idx % 3 == 0 ? '🧘' : ($idx % 3 == 1 ? '🙏' : '💫') ?></span>
+                    <span class="text-xs uppercase font-bold tracking-wider" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;"><?= htmlspecialchars($post['category']) ?></span>
+                  </div>
+                </div>
+              <?php endif; ?>
 
               <!-- Content -->
               <div class="p-6">

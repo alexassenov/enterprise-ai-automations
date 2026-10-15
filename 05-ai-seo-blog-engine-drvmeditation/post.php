@@ -177,7 +177,7 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
         <?= htmlspecialchars($post['title']) ?>
       </h1>
       
-      <div class="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500">
+      <div class="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500 mb-6">
         <div class="flex items-center gap-3">
           <img src="/B92D3EE7-9532-4914-99AC-19082410B5D1.png" alt="Dr. V" class="w-10 h-10 rounded-full object-cover border border-purple-200">
           <div>
@@ -190,6 +190,12 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
           <span>⏱️ <?= $post['reading_time'] ?> min read</span>
         </div>
       </div>
+
+      <?php if (!empty($post['image_url'])): ?>
+      <div class="rounded-3xl overflow-hidden shadow-lg mb-8 max-h-[460px]">
+        <img src="<?= htmlspecialchars($post['image_url']) ?>" alt="<?= htmlspecialchars($post['title']) ?>" class="w-full h-full object-cover" loading="eager">
+      </div>
+      <?php endif; ?>
     </header>
 
     <!-- Post Body -->
