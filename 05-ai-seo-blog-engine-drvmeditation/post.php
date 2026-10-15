@@ -191,11 +191,16 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
         </div>
       </div>
 
-      <?php if (!empty($post['image_url'])): ?>
+      <?php 
+        $hero_img = !empty($post['image_url']) ? $post['image_url'] : 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80';
+      ?>
       <div class="rounded-3xl overflow-hidden shadow-lg mb-8 max-h-[460px]">
-        <img src="<?= htmlspecialchars($post['image_url']) ?>" alt="<?= htmlspecialchars($post['title']) ?>" class="w-full h-full object-cover" loading="eager">
+        <img src="<?= htmlspecialchars($hero_img) ?>" 
+             alt="<?= htmlspecialchars($post['title']) ?>" 
+             class="w-full h-full object-cover" 
+             loading="eager"
+             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80';">
       </div>
-      <?php endif; ?>
     </header>
 
     <!-- Post Body -->
