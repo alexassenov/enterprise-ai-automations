@@ -45,6 +45,13 @@ Production-ready, enterprise-grade AI automations, autonomous agent systems, pro
 * **Tech Stack:** `n8n`, `OpenAI / Gemini`, `Tailwind CSS`, `Nginx`, `Cloudflare CDN & SSL`, [Live Domain](https://drvmeditation.com)
 * **Architecture:** Multi-milestone cloud deployment driving organic Google search traffic and app store downloads for the *Dr. V Healing* mobile app and *The Three Pillars* book. Pairs a fast, high-converting responsive landing page with an automated n8n pipeline producing long-form wellness articles with dynamic CTAs and schema markup. Engineered for a predictable ~$60-$80/mo multi-year operating budget with $0 paid ad spend.
 
+---
+
+### 6. [Autonomous B2B Lead Gen & AI Visual CRO Audit Pipeline](./06-swiss-cro-leadgen-ai-vision/)
+* **Category:** B2B Outbound Lead Gen, Multimodal AI Visual Auditing, High-Ticket CRO & Web Agency Pipeline
+* **Client Engagement:** Swiss Web Agency Client Case Study (Joschua R. / Zurich Google Ads Advertisers)
+* **Tech Stack:** `Python 3.12`, `Playwright Headless Engine`, `Claude 3.5 Sonnet Vision`, `Google PageSpeed Insights (Lighthouse) API`, `PHP 8.3`, `Tailwind CSS`, [Live Review Portal](https://joschua.lexmation.com)
+* **Architecture:** Automated lead generation and visual audit pipeline targeting businesses actively running paid Google Ads in Zurich. Captures pixel-perfect full-page mobile (390px) and desktop screenshots, computes real 4G Core Web Vitals (LCP, FCP, Speed Index, TBT) via official Google Lighthouse APIs, and applies Claude 3.5 Sonnet Vision to evaluate design aesthetics (1–10 rating), visual bugs, and conversion obstacles. Delivers tailored Swiss-German outreach pitches into a private interactive client review portal with 1-click CSV export.
 
 ---
 
