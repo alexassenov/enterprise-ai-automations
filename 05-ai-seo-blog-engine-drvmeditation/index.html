@@ -269,32 +269,31 @@
 
   <!-- ============ NAVIGATION ============ -->
   <nav id="navbar">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between flex-nowrap">
       <!-- Logo -->
-      <a href="#" class="flex items-center gap-3 no-underline">
-        <img src="B92D3EE7-9532-4914-99AC-19082410B5D1.png" alt="Dr. V Logo" class="w-10 h-10 rounded-full object-cover shadow">
-        <div>
+      <a href="/" class="flex items-center gap-3 no-underline flex-shrink-0">
+        <img src="B92D3EE7-9532-4914-99AC-19082410B5D1.png" alt="Dr. V Logo" class="w-10 h-10 rounded-full object-cover shadow flex-shrink-0">
+        <div class="flex-shrink-0">
           <span class="block font-bold text-lg leading-tight" style="font-family:'Montserrat',sans-serif;color:#404040;">Dr. V <span style="color:var(--brand-teal)">Healing</span></span>
-          <span class="block text-xs tracking-widest uppercase" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;font-weight:500;">Mindfulness · Recovery · Life</span>
+          <span class="block text-[10px] tracking-widest uppercase" style="color:var(--brand-purple);font-family:'Montserrat',sans-serif;font-weight:600;">Mindfulness · Recovery · Life</span>
         </div>
       </a>
 
-      <!-- Desktop Nav -->
-      <ul class="hidden md:flex items-center gap-6 list-none m-0 p-0">
-        <li><a href="#about" class="nav-link">About</a></li>
-        <li><a href="#pillars" class="nav-link">Three Pillars</a></li>
-        <li><a href="#system" class="nav-link font-semibold text-teal-600" style="color:var(--brand-teal);">The System ($47)</a></li>
-        <li><a href="#books" class="nav-link">Free Book</a></li>
-        <li><a href="/affiliates" class="nav-link font-semibold text-purple-600" style="color:var(--brand-purple);">Affiliates (80%)</a></li>
-        <li><a href="/blog" class="nav-link">Blog</a></li>
-        <li><a href="#contact" class="nav-link">Contact</a></li>
+      <!-- Desktop Nav (Single Row) -->
+      <ul class="hidden lg:flex items-center gap-5 xl:gap-7 list-none m-0 p-0 flex-nowrap">
+        <li><a href="#about" class="nav-link whitespace-nowrap">About</a></li>
+        <li><a href="#pillars" class="nav-link whitespace-nowrap">Three Pillars</a></li>
+        <li><a href="#system" class="nav-link whitespace-nowrap font-semibold text-teal-600" style="color:var(--brand-teal);">The System ($47)</a></li>
+        <li><a href="/affiliates" class="nav-link whitespace-nowrap font-semibold text-purple-600" style="color:var(--brand-purple);">Affiliates (80%)</a></li>
+        <li><a href="/blog" class="nav-link whitespace-nowrap">Blog</a></li>
+        <li><a href="#contact" class="nav-link whitespace-nowrap">Contact</a></li>
         <li>
-          <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary" style="padding:0.6rem 1.4rem;font-size:0.82rem;">Get System ($47) →</a>
+          <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary whitespace-nowrap flex-shrink-0 shadow-md" style="padding:0.6rem 1.3rem;font-size:0.82rem;">Get System ($47) →</a>
         </li>
       </ul>
 
       <!-- Hamburger -->
-      <button id="hamburger" class="md:hidden p-2 rounded-lg" style="color:var(--brand-purple);" aria-label="Toggle menu">
+      <button id="hamburger" class="lg:hidden p-2 rounded-lg" style="color:var(--brand-purple);" aria-label="Toggle menu">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
@@ -302,19 +301,21 @@
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="md:hidden flex-col gap-0 border-t" style="border-color:rgba(114,114,187,0.1)">
+    <div id="mobile-menu" class="lg:hidden flex-col gap-0 border-t" style="border-color:rgba(114,114,187,0.1)">
       <a href="#about" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">About</a>
       <a href="#pillars" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Three Pillars</a>
       <a href="#system" class="nav-link block px-6 py-3 border-b font-semibold" style="border-color:rgba(114,114,187,0.08);color:var(--brand-teal);" onclick="closeMobile()">The 3 Pillars System ($47)</a>
-      <a href="#books" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Free Book</a>
       <a href="/affiliates" class="nav-link block px-6 py-3 border-b font-semibold" style="border-color:rgba(114,114,187,0.08);color:var(--brand-purple);" onclick="closeMobile()">Affiliate Program (80% Commission)</a>
       <a href="#quiz" class="nav-link block px-6 py-3 border-b font-semibold" style="border-color:rgba(114,114,187,0.08);" onclick="closeMobile()">Quiz: How Can We Help?</a>
       <a href="/blog" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Blog</a>
-      <a href="#contact" class="nav-link block px-6 py-3" onclick="closeMobile()">Contact</a>
+      <a href="#contact" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Contact</a>
+      <div class="p-4 bg-teal-50/50">
+        <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary block text-center w-full py-3 text-sm">
+          Get Instant Access ($47) →
+        </a>
+      </div>
     </div>
-      <a href="#blog" class="nav-link block px-6 py-3 border-b" style="border-color:rgba(114,114,187,0.08)" onclick="closeMobile()">Blog</a>
-      <a href="#contact" class="nav-link block px-6 py-3" onclick="closeMobile()">Contact</a>
-    </div>
+  </nav>
   </nav>
 
   <!-- ============ HERO ============ -->
@@ -332,7 +333,7 @@
         </p>
         <div class="flex flex-wrap gap-4">
           <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary" style="padding:0.95rem 2.2rem;">Get the System ($47) →</a>
-          <a href="#books" class="btn-secondary" style="padding:0.95rem 1.8rem;">Download Free Book</a>
+          <a href="#pillars" class="btn-secondary" style="padding:0.95rem 1.8rem;">Explore The 3 Pillars</a>
         </div>
         <!-- Trust bar -->
         <div class="flex flex-wrap gap-6 mt-10">
@@ -519,18 +520,18 @@
       <!-- CTA under pillars -->
       <div class="text-center mt-14">
         <p class="mb-5" style="color:var(--text-body);font-weight:300;">Ready to start your healing journey?</p>
-        <a href="#books" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Get the Free Book →</a>
+        <a href="#system" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Get The 3 Pillars System ($47) →</a>
       </div>
     </div>
   </section>
 
-  <!-- ============ BOOKS ============ -->
+  <!-- ============ PUBLISHED WORKS (INCLUDED IN $47 SYSTEM) ============ -->
   <section id="books" class="py-24 px-6 bg-white">
     <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
         <span class="section-label">Knowledge is Medicine</span>
-        <h2 class="section-title">Dr. V's Book — <span style="color:var(--brand-teal)">Free to Download</span></h2>
-        <p class="section-subtitle mx-auto text-center">Dr. V's complete method, personal story, and step-by-step practices in one comprehensive guide.</p>
+        <h2 class="section-title">Dr. V's Literature — <span style="color:var(--brand-teal)">The Road to Recovery</span></h2>
+        <p class="section-subtitle mx-auto text-center">Dr. V's complete clinical method, personal recovery story, and daily subconscious exercises — delivered instantly as part of the full system.</p>
       </div>
 
       <div class="max-w-xl mx-auto">
@@ -546,14 +547,15 @@
             >
           </div>
           <div class="p-8 text-center">
-            <div class="text-xs font-bold tracking-widest mb-2" style="color:var(--brand-teal);font-family:'Montserrat',sans-serif;">OFFICIAL GUIDE · ENGLISH EDITION</div>
+            <div class="text-xs font-bold tracking-widest mb-2" style="color:var(--brand-teal);font-family:'Montserrat',sans-serif;">OFFICIAL CLINICAL GUIDE · ENGLISH EDITION</div>
             <h3 class="text-xl font-bold mb-3" style="color:#404040">Self-Healing: The Road to Recovery and Improved Life</h3>
             <p class="text-sm mb-6 max-w-md mx-auto" style="font-weight:300;line-height:1.7;">
               Dr. V's personal journey from two failed spinal surgeries and a wheelchair to full recovery — and the exact Three Pillars practice she used to get there.
             </p>
-            <a href="Selft Healing the road to recvery and improved life.pdf" download class="btn-primary max-w-xs mx-auto block" style="padding:0.9rem 2rem;">
-              ⬇ Download Free (PDF)
+            <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary max-w-xs mx-auto block text-center shadow-lg" style="padding:0.9rem 2rem;">
+              ⚡ Unlock Full System ($47) →
             </a>
+            <p class="text-xs text-gray-400 mt-2.5">Instant digital delivery with guided audio meditations</p>
           </div>
         </div>
 
@@ -985,8 +987,8 @@
             <a href="https://pay.hotmart.com/V108275660U?checkoutMode=2" class="hotmart-fb hotmart__button-checkout btn-primary" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:0.95rem;">
               ⚡ &nbsp;Get Complete 3 Pillars System ($47)
             </a>
-            <a href="#books" class="btn-secondary" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:0.95rem;">
-              📖 &nbsp;Download Free Book
+            <a href="#system" class="btn-secondary" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:0.95rem;">
+              📖 &nbsp;Explore The Complete Bundle
             </a>
           </div>
           <p style="font-size:0.82rem;font-style:italic;color:#bbb;max-width:380px;margin:0 auto;">"I was bedridden. Doctors gave up on me. The Three Pillars brought me back to life." — Dr. V</p>
@@ -1030,9 +1032,9 @@
       growth:{icon:'🌟',title:"You're Ready for the Next Level — Let's Go Deeper",
         body:"Spiritual growth is not a destination — it's a daily practice of alignment. The Three Pillars — Faith, Gratitude, Meditation — are not just healing tools. They are a life philosophy Dr. V lives by every single day. The app is your companion on that journey.",
         feats:[{i:'🙏',t:'<strong>Faith & Gratitude Practices</strong> — deepen your connection with your inner voice and higher purpose'},{i:'🧘',t:'<strong>Advanced Meditation Journeys</strong> — move beyond stress relief into genuine inner stillness'},{i:'📖',t:'<strong>Dr. V\'s core teachings</strong> — rooted in real recovery, real faith, and real science'}]},
-      def:{icon:'🌿',title:"Your Healing Journey Starts Today — The App Is Ready for You",
-        body:"Whatever you're facing, the Dr. V Healing app was built from lived experience — not theory. Dr. V went from wheelchair to walking, from despair to joy, using Faith, Gratitude and Meditation. Those same tools are waiting for you, starting free today.",
-        feats:[{i:'🎧',t:'<strong>Guided Meditation Sessions</strong> — for pain, anxiety, sleep and inner peace'},{i:'🙏',t:'<strong>Daily Gratitude & Faith Practices</strong> — the core of Dr. V\'s recovery method'},{i:'📱',t:'<strong>Available on iOS & Android</strong> — start free, anytime, anywhere'}]}
+      def:{icon:'🌿',title:"Your Healing Journey Starts Today — The System Is Ready for You",
+        body:"Whatever you're facing, the Three Pillars recovery method was built from lived experience — not theory. Dr. V went from wheelchair to walking, using Faith, Gratitude and Meditation. Those same clinical tools are waiting for you in the complete system today.",
+        feats:[{i:'🎧',t:'<strong>Guided Audio Journeys & Meditations</strong> — for pain, anxiety, sleep and vagal reset'},{i:'🙏',t:'<strong>Daily Gratitude & Faith Practices</strong> — the core of Dr. V\'s recovery method'},{i:'📱',t:'<strong>Complete Master Guide & Protocols</strong> — lifetime access on smartphone and desktop'}]}
     };
     function pick(){
       if(tags.indexOf('pain')>-1)return DB.pain;
@@ -1184,7 +1186,7 @@
             <li><a href="#about" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">About Dr. V</a></li>
             <li><a href="#pillars" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Three Pillars</a></li>
             <li><a href="#system" style="color:var(--brand-teal);text-decoration:none;font-size:0.9rem;font-weight:600;transition:color 0.2s;">The 3 Pillars System ($47)</a></li>
-            <li><a href="#books" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Free Books</a></li>
+            <li><a href="#books" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Dr. V Literature</a></li>
             <li><a href="/affiliates" style="color:var(--brand-purple);text-decoration:none;font-size:0.9rem;font-weight:600;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--brand-purple)'">Affiliate Program (80%)</a></li>
             <li><a href="#quiz" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Quiz (How Can We Help?)</a></li>
             <li><a href="/blog" style="color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.9rem;font-weight:300;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Blog</a></li>
