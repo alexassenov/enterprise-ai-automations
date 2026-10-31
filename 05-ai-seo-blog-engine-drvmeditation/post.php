@@ -45,6 +45,124 @@ try {
 $page_title = !empty($post['meta_title']) ? htmlspecialchars($post['meta_title']) : htmlspecialchars($post['title']) . " | Dr. V Healing";
 $meta_desc = !empty($post['meta_description']) ? htmlspecialchars($post['meta_description']) : htmlspecialchars(substr(strip_tags($post['content']), 0, 160));
 $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slug']);
+
+// Helper function to build the interactive Clinical Protocol Card
+function renderClinicalProtocolCard($rawTitle, $rawIntro, $steps, $post_slug) {
+    $totalSteps = count($steps);
+    if ($totalSteps === 0) return '';
+    $storageSlug = preg_replace('/[^a-zA-Z0-9]/', '_', $post_slug);
+
+    $html = '<div class="clinical-protocol-card" data-protocol-slug="' . htmlspecialchars($storageSlug) . '">';
+    $html .= '  <div class="flex items-center justify-between flex-wrap gap-3 mb-2">';
+    $html .= '    <div class="flex items-center gap-2">';
+    $html .= '      <span class="protocol-badge">';
+    $html .= '        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    $html .= '        Evidence-Based Clinical Protocol';
+    $html .= '      </span>';
+    $html .= '      <span class="text-xs font-semibold uppercase tracking-wider text-teal-800 hidden sm:inline">Daily Action Checklist</span>';
+    $html .= '    </div>';
+    $html .= '    <div class="text-xs font-bold text-teal-900 bg-white/90 px-3.5 py-1.5 rounded-full border border-teal-200/80 shadow-xs">';
+    $html .= '      <span class="completed-counter">0</span> / ' . $totalSteps . ' Steps Completed';
+    $html .= '    </div>';
+    $html .= '  </div>';
+
+    $html .= '  <h3 class="protocol-header-title">' . htmlspecialchars($rawTitle) . '</h3>';
+    if (!empty($rawIntro)) {
+        $html .= '  <div class="protocol-intro mb-4 text-gray-600 leading-relaxed font-light">' . $rawIntro . '</div>';
+    }
+
+    $html .= '  <div class="protocol-progress-bar-container"><div class="protocol-progress-bar-fill"></div></div>';
+    $html .= '  <div class="space-y-3 protocol-steps-wrapper">';
+
+    foreach ($steps as $idx => $st) {
+        $stepNum = $idx + 1;
+        $html .= '    <div class="protocol-step-item" data-step="' . $stepNum . '">';
+        $html .= '      <div class="flex items-start gap-3.5">';
+        $html .= '        <div class="step-number-circle">' . $stepNum . '</div>';
+        $html .= '        <div class="flex-grow">';
+        $html .= '          <div class="flex items-center justify-between gap-2 mb-1">';
+        $html .= '            <div class="step-title">' . htmlspecialchars($st['title']) . '</div>';
+        $html .= '            <span class="status-pill text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Step ' . $stepNum . '</span>';
+        $html .= '          </div>';
+        $html .= '          <div class="step-desc">' . $st['desc'] . '</div>';
+        $html .= '        </div>';
+        $html .= '      </div>';
+        $html .= '    </div>';
+    }
+
+    $html .= '  </div>';
+    $html .= '  <div class="protocol-complete-celebration">';
+    $html .= '    🎉 <strong>Protocol Completed!</strong> You have marked off all action steps for today\'s practice. Consistency is the foundation of neuroplastic healing.';
+    $html .= '  </div>';
+    $html .= '</div>';
+
+    return $html;
+}
+
+// Function to transform Actionable Clinical Protocols into rich interactive cards
+function formatClinicalProtocols($content, $post_slug = '') {
+    // 1. Format A: H2 + list (ul/ol)
+    $patternA = '/<h2[^>]*>((?:(?!<\/h2>).)*?(?:Protocol|Routine|Framework|Step-by-Step|Action Plan|Method|Exercise|Practices).*?)<\/h2>(?:\s*<p[^>]*>((?:(?!<\/p>).)*?)<\/p>)?\s*<(ul|ol)[^>]*>(.*?)<\/\3>/is';
+    
+    $content = preg_replace_callback($patternA, function($matches) use ($post_slug) {
+        $rawTitle = strip_tags($matches[1]);
+        $rawIntro = !empty($matches[2]) ? $matches[2] : '';
+        $listHtml = $matches[4];
+
+        preg_match_all('/<li[^>]*>(.*?)<\/li>/is', $listHtml, $items);
+        if (empty($items[1])) {
+            return $matches[0];
+        }
+
+        $steps = [];
+        foreach ($items[1] as $idx => $itemHtml) {
+            $stepNum = $idx + 1;
+            $stepTitle = 'Step ' . $stepNum;
+            $stepDesc = $itemHtml;
+
+            if (preg_match('/<strong[^>]*>(.*?)<\/strong>/is', $itemHtml, $sMatch)) {
+                $stepTitle = trim(preg_replace('/[:\-]$/', '', strip_tags($sMatch[1])));
+                $stepDesc = trim(preg_replace('/<strong[^>]*>.*?<\/strong>\s*[:\-]?\s*/is', '', $itemHtml));
+            }
+
+            $steps[] = ['title' => $stepTitle, 'desc' => $stepDesc];
+        }
+
+        return renderClinicalProtocolCard($rawTitle, $rawIntro, $steps, $post_slug);
+    }, $content);
+
+    // 2. Format B: H2 + H3 sub-steps (Step 1, Phase 1, Stage 1, etc.)
+    $patternB = '/(<h2[^>]*>((?:(?!<\/h2>).)*?(?:Protocol|Routine|Framework|Step-by-Step|Action Plan|Method|Reprogramming|Shift|Inner Voice).*?)<\/h2>)(.*?)(?=<h2|$)/is';
+
+    $content = preg_replace_callback($patternB, function($matches) use ($post_slug) {
+        if (strpos($matches[0], 'clinical-protocol-card') !== false) {
+            return $matches[0];
+        }
+
+        $rawTitle = strip_tags($matches[2]);
+        $body = $matches[3];
+
+        if (preg_match_all('/<h3[^>]*>(.*?)<\/h3>(.*?)(?=<h3|$)/is', $body, $h3Matches, PREG_SET_ORDER)) {
+            $firstH3Pos = stripos($body, '<h3');
+            $intro = trim(substr($body, 0, $firstH3Pos));
+
+            $steps = [];
+            foreach ($h3Matches as $idx => $s) {
+                $stepTitle = trim(strip_tags($s[1]));
+                $stepDesc = trim($s[2]);
+                $steps[] = ['title' => $stepTitle, 'desc' => $stepDesc];
+            }
+
+            if (!empty($steps)) {
+                return renderClinicalProtocolCard($rawTitle, $intro, $steps, $post_slug);
+            }
+        }
+
+        return $matches[0];
+    }, $content);
+
+    return $content;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -135,6 +253,156 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
     .article-content ul, .article-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
     .article-content li { margin-bottom: 0.5rem; }
     .article-content blockquote { border-left: 4px solid var(--brand-teal); padding-left: 1.25rem; font-style: italic; color: #444; background: rgba(0,157,138,0.04); padding-top: 0.8rem; padding-bottom: 0.8rem; margin: 2rem 0; border-radius: 0 12px 12px 0; }
+
+    /* Interactive Clinical Protocol Card */
+    .clinical-protocol-card {
+      background: linear-gradient(135deg, rgba(0, 157, 138, 0.05) 0%, rgba(255, 255, 255, 0.95) 45%, rgba(114, 114, 187, 0.07) 100%);
+      border: 2px solid rgba(0, 157, 138, 0.22);
+      border-radius: 1.75rem;
+      box-shadow: 0 20px 40px -15px rgba(0, 157, 138, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+      margin: 3.5rem 0;
+      padding: 2.25rem 1.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    @media (min-width: 640px) {
+      .clinical-protocol-card {
+        padding: 2.75rem 2.5rem;
+      }
+    }
+    .protocol-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--brand-teal);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.4rem 0.95rem;
+      border-radius: 9999px;
+      box-shadow: 0 2px 6px rgba(0, 157, 138, 0.3);
+      font-family: 'Montserrat', sans-serif;
+    }
+    .protocol-header-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #1a202c;
+      margin-top: 1.25rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.3;
+      border: none !important;
+      padding-bottom: 0 !important;
+    }
+    .protocol-intro {
+      font-size: 1rem;
+      color: #4a5568;
+      line-height: 1.65;
+      margin-bottom: 1.75rem;
+      font-weight: 300;
+    }
+    .protocol-progress-bar-container {
+      width: 100%;
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 1.75rem;
+    }
+    .protocol-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #009D8A 0%, #7272BB 100%);
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .protocol-step-item {
+      background: #ffffff;
+      border: 1.5px solid #edf2f7;
+      border-radius: 1.25rem;
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .protocol-step-item:hover {
+      border-color: #009D8A;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 157, 138, 0.08);
+    }
+    .protocol-step-item.is-completed {
+      background: #f0fdfa;
+      border-color: #5eead4;
+    }
+    .protocol-step-item.is-completed .step-number-circle {
+      background: #009D8A;
+      color: #ffffff;
+      border-color: #009D8A;
+      box-shadow: 0 0 0 3px rgba(0, 157, 138, 0.2);
+    }
+    .step-number-circle {
+      width: 2.25rem;
+      height: 2.25rem;
+      min-width: 2.25rem;
+      border-radius: 9999px;
+      border: 2px solid #009D8A;
+      background: #e6f7f5;
+      color: #009D8A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .step-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: #1a202c;
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+    }
+    .protocol-step-item.is-completed .step-title {
+      color: #007a6b;
+    }
+    .step-desc {
+      font-size: 0.95rem;
+      color: #4a5568;
+      line-height: 1.65;
+      margin: 0;
+      font-weight: 300;
+    }
+    .step-desc p {
+      margin-bottom: 0.6rem;
+    }
+    .step-desc p:last-child {
+      margin-bottom: 0;
+    }
+    .step-desc ul, .step-desc ol {
+      margin: 0.5rem 0 0.5rem 1.25rem;
+      list-style-type: disc;
+    }
+    .step-desc li {
+      margin-bottom: 0.35rem;
+    }
+    .protocol-complete-celebration {
+      display: none;
+      background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%);
+      border: 1.5px solid #a7f3d0;
+      padding: 1.25rem;
+      border-radius: 1rem;
+      text-align: center;
+      color: #065f46;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -205,7 +473,7 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
 
     <!-- Post Body -->
     <article class="article-content text-gray-700">
-      <?= $post['content'] ?>
+      <?= formatClinicalProtocols($post['content'], $post['slug']) ?>
     </article>
 
     <!-- FAQs if available -->
@@ -273,6 +541,84 @@ $canonical_url = "https://drvmeditation.com/blog/" . htmlspecialchars($post['slu
       </div>
     </div>
   </footer>
+
+  <!-- Interactive Clinical Protocol Handler -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const protocolCards = document.querySelectorAll('.clinical-protocol-card');
+    protocolCards.forEach(card => {
+      const slug = card.getAttribute('data-protocol-slug') || 'default';
+      const storageKey = 'drv_protocol_' + slug;
+      let savedState = {};
+      try {
+        savedState = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      } catch(e) {}
+
+      const stepItems = card.querySelectorAll('.protocol-step-item');
+      const counter = card.querySelector('.completed-counter');
+      const fill = card.querySelector('.protocol-progress-bar-fill');
+      const celebration = card.querySelector('.protocol-complete-celebration');
+
+      function updateProgress() {
+        let completed = 0;
+        stepItems.forEach(item => {
+          if (item.classList.contains('is-completed')) completed++;
+        });
+        const total = stepItems.length;
+        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        if (counter) counter.textContent = completed;
+        if (fill) fill.style.width = pct + '%';
+        if (celebration) {
+          celebration.style.display = (completed === total && total > 0) ? 'block' : 'none';
+        }
+      }
+
+      stepItems.forEach(item => {
+        const stepNum = item.getAttribute('data-step');
+        const circle = item.querySelector('.step-number-circle');
+        const pill = item.querySelector('.status-pill');
+
+        // Restore saved state
+        if (savedState[stepNum]) {
+          item.classList.add('is-completed');
+          if (circle) circle.textContent = '✓';
+          if (pill) {
+            pill.textContent = 'Completed ✓';
+            pill.className = 'status-pill text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800';
+          }
+        }
+
+        // Toggle on click
+        item.addEventListener('click', function() {
+          this.classList.toggle('is-completed');
+          const isDone = this.classList.contains('is-completed');
+          savedState[stepNum] = isDone;
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(savedState));
+          } catch(e) {}
+
+          if (isDone) {
+            if (circle) circle.textContent = '✓';
+            if (pill) {
+              pill.textContent = 'Completed ✓';
+              pill.className = 'status-pill text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800';
+            }
+          } else {
+            if (circle) circle.textContent = stepNum;
+            if (pill) {
+              pill.textContent = 'Step ' + stepNum;
+              pill.className = 'status-pill text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500';
+            }
+          }
+          updateProgress();
+        });
+      });
+
+      updateProgress();
+    });
+  });
+  </script>
 
 </body>
 </html>
