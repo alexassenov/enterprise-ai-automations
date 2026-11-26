@@ -1,0 +1,880 @@
+{
+  "name": "Autonomous AI Inbound Lead Enrichment & Follow-Up Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "options": {}
+      },
+      "id": "74803e74-f54f-48be-8017-3dcbf6ccf587",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        304,
+        16
+      ],
+      "webhookId": "60b15b95-b8d3-450f-9612-146533de397a"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.website_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "71d5d221-4ff1-4a0f-9815-730d096c3bd8",
+      "name": "HTTP Request Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        544,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. \u0412\u0437\u0438\u043c\u0430\u043c\u0435 HTML \u0441\u044a\u0434\u044a\u0440\u0436\u0430\u043d\u0438\u0435\u0442\u043e \u043e\u0442 HTTP Request Scraper \u043d\u043e\u0434\u0430\nconst htmlContent = $input.first().json.data || $input.first().json.body || '';\n\n// 2. \u041f\u043e\u0447\u0438\u0441\u0442\u0432\u0430\u043c\u0435 HTML \u0442\u0430\u0433\u043e\u0432\u0435\u0442\u0435, \u0437\u0430 \u0434\u0430 \u043e\u0441\u0442\u0430\u043d\u0435 \u0441\u0430\u043c\u043e \u0447\u0438\u0441\u0442 \u0442\u0435\u043a\u0441\u0442 \u0437\u0430 AI\nconst cleanText = htmlContent\n  .toString()\n  .replace(/<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>/gi, '')\n  .replace(/<style\\b[^<]*(?:(?!<\\/style>)<[^<]*)*<\\/style>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 3000);\n\n// 3. \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u0442\u043e\u0447\u043d\u0438\u0442\u0435 3 \u043f\u043e\u043b\u0435\u0442\u0430, \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0438 \u043e\u0442 \u0442\u0432\u043e\u044f\u0442\u0430 \u0444\u043e\u0440\u043c\u0430\nconst webhookData = $('Webhook Trigger').first().json.body;\n\nreturn {\n  json: {\n    client_name: webhookData.name || 'Client',\n    bottleneck_goal: webhookData.bottleneck || 'No bottleneck specified',\n    contact_info: webhookData.email || 'No contact provided',\n    website_url: webhookData.website_url || 'https://lexmation.com',\n    scraped_text: cleanText\n  }\n};"
+      },
+      "id": "b6c0f52d-faa8-4316-bee6-01061f01909a",
+      "name": "Clean Scraped Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "client_name",
+              "stringValue": "={{ $('Clean Scraped Text').item.json.client_name }}"
+            },
+            {
+              "name": "contact_info",
+              "stringValue": "={{ $('Clean Scraped Text').item.json.contact_info }}"
+            },
+            {
+              "name": "bottleneck_goal",
+              "stringValue": "={{ $('Clean Scraped Text').item.json.bottleneck_goal }}"
+            },
+            {
+              "name": "ai_pitch",
+              "stringValue": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02b83e6b-5398-4fdd-af65-040da603b86d",
+      "name": "Format Lead Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        1264,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4",
+          "mode": "list",
+          "cachedResultName": "Lexmation Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.client_name }}",
+            "Contact": "={{ $json.contact_info }}",
+            "Bottleneck": "={{ $json.bottleneck_goal }}",
+            "Ai Pitch": "={{ $json.ai_pitch }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bottleneck",
+              "displayName": "Bottleneck",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ai Pitch",
+              "displayName": "Ai Pitch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "087a38bc-cfbe-40fe-bf85-539d212c964a",
+      "name": "Google Sheets Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1440,
+        16
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YKLDfEamB8A53Kro",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BKARJ7ZPH",
+          "mode": "id"
+        },
+        "text": "=\u26a1 \u041d\u043e\u0432 Lead: {{ $('Format Notification & Emails').item.json.contact_info }}{{ $('Format Notification & Emails').item.json.contact_info }} )",
+        "otherOptions": {}
+      },
+      "id": "209001df-76c4-4bbb-ac48-71ae13d24b3f",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        16
+      ],
+      "webhookId": "d2fa59d6-e113-4105-9abc-35085f92a046",
+      "credentials": {
+        "slackApi": {
+          "id": "U23uhsmIy2APN8V0",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following client inquiry and scraped website context, then build a custom solution pitch:\n\nClient Name: {{ $json.client_name }}\nBottleneck / Goal: {{ $json.bottleneck_goal }}\nContact Method: {{ $json.contact_info }}\nWebsite Content:\n{{ $json.scraped_text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        16
+      ],
+      "id": "7a2e8f7c-f6ce-48f2-8d25-802809db2ebc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "=GPT-OSS 120B (Medium)",
+          "mode": "id"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        192
+      ],
+      "id": "f47cce82-01ee-48df-a4b3-8d35fbac3416",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        464
+      ],
+      "id": "3c6ebfc0-e719-4238-bf46-5e5d51ceeaf9",
+      "name": "Wait",
+      "webhookId": "656b8a6e-52ee-4301-ac31-93f27581fbf5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36670e48-395f-4ace-9bf5-142c85eec6ca",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1776,
+        464
+      ],
+      "id": "7bbde824-7155-40a7-9190-3a3c6f13b688",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "sender": "={{ $('Format Notification & Emails').item.json.contact_info }}"
+        }
+      },
+      "id": "40c12eb9-26e9-43ca-8561-7466783134d2",
+      "name": "Check Client Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1552,
+        464
+      ],
+      "webhookId": "de3d8e40-2c3b-4c84-bf1f-1cae8f015b19",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=alexassenov@gmail.com",
+        "subject": "={{ $json.client_email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.client_email_body }}",
+        "options": {}
+      },
+      "id": "162aa2d7-af43-4725-b6e3-8cff29cefad0",
+      "name": "Send Pitch to Client",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1776,
+        64
+      ],
+      "webhookId": "de3d8e40-2c3b-4c84-bf1f-1cae8f015b19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Send Pitch to Client').item.json.id }}",
+        "emailType": "text",
+        "message": "Hey",
+        "options": {}
+      },
+      "id": "8112b327-f8f3-42b9-9c32-d485facf4148",
+      "name": "Send Follow-up Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2032,
+        448
+      ],
+      "webhookId": "de3d8e40-2c3b-4c84-bf1f-1cae8f015b19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $('Format Lead Output').first().json.output || $('Google Sheets Log').first().json.output || '';\nconst clientName = $('Format Lead Output').first().json.client_name || '\u041d\u044f\u043c\u0430 \u043f\u043e\u0441\u043e\u0447\u0435\u043d\u043e \u0438\u043c\u0435';\nconst contactInfo = $('Format Lead Output').first().json.contact_info || '\u041d\u044f\u043c\u0430 \u043f\u043e\u0441\u043e\u0447\u0435\u043d \u043a\u043e\u043d\u0442\u0430\u043a\u0442';\nconst bottleneckGoal = $('Format Lead Output').first().json.bottleneck_goal || '\u041d\u044f\u043c\u0430 \u043f\u043e\u0441\u043e\u0447\u0435\u043d\u0430 \u0446\u0435\u043b';\n\nlet emailSubject = '\u0418\u0437\u0433\u0440\u0430\u0436\u0434\u0430\u043d\u0435 \u043d\u0430 \u0434\u0438\u0433\u0438\u0442\u0430\u043b\u043d\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u0430 - Lexmation';\nlet emailBody = rawText;\n\n// 1. \u0418\u0437\u0432\u043b\u0438\u0447\u0430\u043d\u0435 \u043d\u0430 \u0442\u0435\u043c\u0430 (Subject)\nconst subjectMatch = rawText.match(/(?:\\*\\*|)?(?:\u0422\u0435\u043c\u0430|Subject)(?:\\*\\*|)?:\\s*(.*)/i);\nif (subjectMatch && subjectMatch[1]) {\n  emailSubject = subjectMatch[1].replace(/[\\*\\_]/g, '').trim();\n}\n\n// 2. \u0418\u0437\u0432\u043b\u0438\u0447\u0430\u043d\u0435 \u043d\u0430 \u0441\u044a\u0449\u0438\u043d\u0441\u043a\u0438\u044f \u043f\u0438\u0442\u0447 \u0437\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u0430 (\u043e\u0442 \"\u0417\u0434\u0440\u0430\u0432\u0435\u0439\u0442\u0435 / Hi\" \u043d\u0430\u0442\u0430\u0442\u044a\u043a)\nconst greetingMatch = rawText.match(/(\u0417\u0434\u0440\u0430\u0432\u0435\u0439\u0442\u0435|\u0417\u0434\u0440\u0430\u0432\u0435\u0439|Hi|Hello)[\\s\\,\\!]/i);\nif (greetingMatch) {\n  emailBody = rawText.substring(rawText.indexOf(greetingMatch[0])).trim();\n}\n\n// 3. \u041e\u0442\u0440\u044f\u0437\u0432\u0430\u043c\u0435 \u043c\u0435\u0442\u0430-\u0430\u043d\u0430\u043b\u0438\u0437\u0430 \u043e\u0442\u0434\u043e\u043b\u0443\nconst cutoffMatch = emailBody.match(/(?:\\*\\*\\*|\u0410\u043d\u0430\u043b\u0438\u0437 \u043d\u0430 \u043f\u043e\u0434\u0445\u043e\u0434\u0430|Why this pitch works|Analysis of the Inquiry)/i);\nif (cutoffMatch) {\n  emailBody = emailBody.substring(0, cutoffMatch.index).trim();\n}\n\n// 4. \u041a\u0440\u0430\u0442\u044a\u043a \u043f\u0440\u0435\u0433\u043b\u0435\u0434 \u0437\u0430 Slack (\u0434\u043e 500 \u0441\u0438\u043c\u0432\u043e\u043b\u0430)\nlet slackPreview = emailBody;\nif (slackPreview.length > 500) {\n  slackPreview = slackPreview.substring(0, 497) + '...';\n}\n\n// 5. \u0411\u043e\u0433\u0430\u0442 HTML \u0430\u043d\u0430\u043b\u0438\u0437 \u0437\u0430 \u0442\u0432\u043e\u044f \u0432\u044a\u0442\u0440\u0435\u0448\u0435\u043d \u0438\u043c\u0435\u0439\u043b\nconst adminHtmlBody = `\n<div style=\"font-family: Arial, sans-serif; background-color: #0f172a; color: #ffffff; padding: 25px; border-radius: 12px; max-width: 650px;\">\n  <h2 style=\"color: #ec4899; margin-top: 0;\">\ud83d\ude80 \u041d\u043e\u0432 Lead \u0432 Lexmation</h2>\n  <hr style=\"border: 0.5px solid rgba(255,255,255,0.1); margin-bottom: 20px;\">\n  \n  <div style=\"background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;\">\n    <p style=\"margin: 5px 0;\"><strong>\ud83d\udc64 \u0418\u043c\u0435 / \u0411\u0440\u0430\u043d\u0434:</strong> ${clientName}</p>\n    <p style=\"margin: 5px 0;\"><strong>\u2709\ufe0f \u041a\u043e\u043d\u0442\u0430\u043a\u0442:</strong> ${contactInfo}</p>\n    <p style=\"margin: 5px 0;\"><strong>\ud83c\udfaf \u0417\u0430\u044f\u0432\u0435\u043d\u0430 \u0446\u0435\u043b / \u041f\u0440\u043e\u0431\u043b\u0435\u043c:</strong> ${bottleneckGoal}</p>\n  </div>\n\n  <h3 style=\"color: #38bdf8; margin-bottom: 10px;\">\ud83d\udcca \u041f\u044a\u043b\u0435\u043d AI \u0410\u043d\u0430\u043b\u0438\u0437 \u0438 \u041f\u043b\u0430\u043d:</h3>\n  <div style=\"background: rgba(56, 189, 248, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #cbd5e1;\">${rawText}</div>\n</div>\n`;\n\nreturn {\n  json: {\n    client_name: clientName,\n    contact_info: contactInfo,\n    bottleneck_goal: bottleneckGoal,\n    client_email_subject: emailSubject,\n    client_email_body: emailBody,\n    admin_html_body: adminHtmlBody,\n    slack_preview: slackPreview\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        16
+      ],
+      "id": "611191d7-6cd1-4ef5-a508-7825d1cefb5e",
+      "name": "Format Notification & Emails"
+    },
+    {
+      "parameters": {
+        "sendTo": "=alexassenov@gmail.com",
+        "subject": "=Custom Automation Strategy for {{ $json.client_name }}",
+        "message": "={{ $json.admin_html_body }}",
+        "options": {}
+      },
+      "id": "d0b99c12-4c63-4dd2-ba77-5d14c0247fd5",
+      "name": "Send Email to Admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1776,
+        -112
+      ],
+      "webhookId": "de3d8e40-2c3b-4c84-bf1f-1cae8f015b19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1952,
+        16
+      ],
+      "id": "7a2dc84a-ba4e-4ee7-9144-f1ec5bccf30f",
+      "name": "Sync Email Confirmations"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "=GPT-OSS 120B (Medium)",
+          "mode": "id"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        336
+      ],
+      "id": "23957845-0045-4e3b-bb16-9153ea0b894a",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "L21ElGepVbAzKPOh",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Stock Request Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output.replace(/<img[^>]*>/gi, '') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "2df710f2-ebfa-4a23-aa15-cab5fca52f69",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        976,
+        480
+      ],
+      "webhookId": "ddb1cdba-4af3-4363-ac7b-a81f9ba3d8c4",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "XpsxJBZxAWu4uQK0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "###  04 | AUTONOMOUS FOLLOW-UP ENGINE\n> Zero human intervention. Monitors Gmail threads for 72 hours and auto-converts silent leads.\n\n* 3-Day Execution Pause\n* Smart Reply Detection\n* Automated Sequence Trigger",
+        "height": 416,
+        "width": 1072,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        224
+      ],
+      "id": "6cb8bff7-06fd-485d-b5fb-937889da6db2",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### 03 | DUAL-DISPATCH & SLACK SYNC\n> Delivers the pitch to the prospect within seconds while pushing full internal intelligence to Slack.\n\n* Client Proposals & Admin Alerts\n* Multi-Branch Sync (Merge Node)\n* Real-Time Slack Notifications",
+        "height": 416,
+        "width": 1072
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -224
+      ],
+      "id": "c9845fa0-1743-40c3-8a41-a81cc89861ba",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### 02 | AI STRATEGY & PITCH ENGINE\n> Evaluates business bottlenecks, engineers a custom solution, and logs structured CRM data instantly.\n\n",
+        "height": 544,
+        "width": 304,
+        "color": "#264D23"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        928,
+        -224
+      ],
+      "id": "6141d18a-e4c5-47f0-84cd-1e2fbb8e5cdf",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### 01 | REAL-TIME LEAD ENRICHMENT\n> Captures form submissions & autonomously scrapes the prospect's brand context to feed the AI core.\n\n* Webhook Trigger\n* Deep Domain Scraper\n* Data Sanitization Engine",
+        "height": 544,
+        "width": 656,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -224
+      ],
+      "id": "712e000f-1364-4991-8ebe-8bc8d7edac72",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BKARJ7ZPH",
+          "mode": "id"
+        },
+        "text": "=\u26a1 \u041d\u043e\u0432 Lead: {{ $('Format Notification & Emails').item.json.contact_info }}{{ $('Format Notification & Emails').item.json.contact_info }} )",
+        "otherOptions": {}
+      },
+      "id": "59ab4b53-cda4-473d-bc33-cf13fbe6779c",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        480
+      ],
+      "webhookId": "d2fa59d6-e113-4105-9abc-35085f92a046",
+      "credentials": {
+        "slackApi": {
+          "id": "U23uhsmIy2APN8V0",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=alexassenov@gmail.com",
+        "subject": "={{ $json.client_email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.client_email_body }}",
+        "options": {}
+      },
+      "id": "aa933960-75f3-4597-a639-c45ad3d71d2a",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        656,
+        480
+      ],
+      "webhookId": "de3d8e40-2c3b-4c84-bf1f-1cae8f015b19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4",
+          "mode": "list",
+          "cachedResultName": "Lexmation Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HC8J5dvD2Vt9LBHnJ6sxA75zI_4kLcb8eF4EyVtJnL4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bottleneck",
+              "displayName": "Bottleneck",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ai Pitch",
+              "displayName": "Ai Pitch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a55d2e33-f713-4593-a2ac-e31bdf138512",
+      "name": "Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        496,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YKLDfEamB8A53Kro",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "options": {}
+      },
+      "id": "3865eced-2c0a-418d-9124-848d2ea44313",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        336,
+        480
+      ],
+      "webhookId": "60b15b95-b8d3-450f-9612-146533de397a"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Scraper": {
+      "main": [
+        [
+          {
+            "node": "Clean Scraped Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Scraped Text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Lead Output": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Log": {
+      "main": [
+        [
+          {
+            "node": "Format Notification & Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Lead Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check Client Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send Follow-up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Client Reply": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Pitch to Client": {
+      "main": [
+        [
+          {
+            "node": "Sync Email Confirmations",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notification & Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Email to Admin",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Pitch to Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email to Admin": {
+      "main": [
+        [
+          {
+            "node": "Sync Email Confirmations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Email Confirmations": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null
+}

@@ -1,0 +1,1119 @@
+{
+  "name": "Enterprise LC Deal Protection - HITL Dual-Agent Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 395783571,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit#gid=395783571"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "ac4b316b-3fb9-418e-9c67-708cbb0c361f",
+      "name": "Google Sheet Row Added",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -256
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "PejTdgQtQcLuvNlW",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $json || {};\n    const now = new Date();\n    const datePart = now.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);\n    const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();\n    const caseId = \"LC-\" + datePart + \"-\" + randomPart;\n\n    // \u041d\u043e\u0440\u043c\u0430\u043b\u0438\u0437\u0438\u0440\u0430\u043c\u0435 \u0438\u043c\u0435\u043d\u0430\u0442\u0430 \u043d\u0430 \u043a\u043e\u043b\u043e\u043d\u0438\u0442\u0435 (\u043c\u0430\u0445\u0430\u043c\u0435 \u0438\u0437\u043b\u0438\u0448\u043d\u0438 \u0438\u043d\u0442\u0435\u0440\u0432\u0430\u043b\u0438)\n    const normalizedRow = {};\n    for (const key in row) {\n      normalizedRow[key.trim()] = row[key];\n    }\n\n    // \u0412\u0437\u0438\u043c\u0430\u043c\u0435 \u043b\u0438\u043d\u043a\u0430 \u043e\u0442 \u043a\u043e\u043b\u043e\u043d\u0430\u0442\u0430 (\u0432\u0435\u0447\u0435 \u0438\u0437\u0447\u0438\u0441\u0442\u0435\u043d\u0430 \u043e\u0442 \u0438\u043d\u0442\u0435\u0440\u0432\u0430\u043b\u0438)\n    const fileLink = normalizedRow['Upload LC PDF'] || '';\n\n    // \u0418\u0437\u0432\u043b\u0438\u0447\u0430\u043c\u0435 Google Drive ID-\u0442\u043e \u043e\u0442 \u043b\u0438\u043d\u043a\u0430\n    let driveFileId = '';\n    const match = fileLink.match(/[-\\w]{25,}/);\n    if (match) driveFileId = match[0];\n\n    return [{\n      json: {\n        caseId,\n        submitterName: normalizedRow['Full Name'] || '',\n        company: normalizedRow['Company'] || '',\n        email: normalizedRow['Business Email'] || '',\n        buyerCountry: normalizedRow['Buyer Country'] || '',\n        lcValue: normalizedRow['Letter of Credit Value'] || '',\n        description: normalizedRow['Brief Description of Goods'] || '',\n        fileLink,\n        driveFileId,\n        originalRow: row\n      }\n    }];\n\n"
+      },
+      "id": "0ef79349-11a5-4c1b-b332-ac941c6a18dc",
+      "name": "Prepare Case Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.driveFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "aa5d8a59-0dce-4a22-8785-73eab33639f6",
+      "name": "Download PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        256,
+        -256
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "5HyraZ8D82n9nRfa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "45998d67-99ca-484a-b0b3-797ee8ae1800",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "clause_reports",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "trace_id",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.caseId }}"
+            },
+            {
+              "fieldId": "submitter_name",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.submitterName }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.company }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.email }}"
+            },
+            {
+              "fieldId": "buyer_country",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.buyerCountry }}"
+            },
+            {
+              "fieldId": "lc_value",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.lcValue }}"
+            },
+            {
+              "fieldId": "pdf_link",
+              "fieldValue": "={{ $('Prepare Case Data').item.json.fileLink }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Processing"
+            },
+            {
+              "fieldId": "raw_text",
+              "fieldValue": "={{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "id": "2f7f101d-0e2a-4abb-8c0c-8a11d54e0372",
+      "name": "Create Supabase Report",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -256
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QWIKYuwLXNJa6qqT",
+          "name": "Supabase account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-pro-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-pro-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json['Analyst Prompt'] }}\n\nOriginal Text:\n{{ $('Extract PDF Text').item.json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        -256
+      ],
+      "id": "edf3512e-82db-4a8f-b3a5-0f9f94d284fe",
+      "name": "Gemini Analyst",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jmyt339Ch5ZPdoXy",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $('Get Prompts').item.json['Critic Prompt'] }}\n\nORIGINAL TEXT TO ANALYZE:\n{{ $('Extract PDF Text').item.json.text }}\n\nANALYST FINDINGS:\n{{ $json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        -256
+      ],
+      "id": "9a2b6eae-5d5f-4618-9757-fd76ba67c65e",
+      "name": "Gemini Critic",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jmyt339Ch5ZPdoXy",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "clause_reports",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "trace_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prepare Case Data').item.json.caseId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "ai_analyst_output",
+              "fieldValue": "={{ $('Gemini Analyst').item.json.content.parts[0].text }}"
+            },
+            {
+              "fieldId": "ai_critic_output",
+              "fieldValue": "={{ $('Gemini Critic').item.json.content.parts[0].text }}\n"
+            },
+            {
+              "fieldId": "final_json",
+              "fieldValue": "={{ $('Gemini Critic').item.json.content.parts[0].text }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "AI Complete"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1888,
+        -256
+      ],
+      "id": "08a6f3d5-6f16-440d-88e5-e587411d7e0d",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QWIKYuwLXNJa6qqT",
+          "name": "Supabase account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w",
+          "mode": "list",
+          "cachedResultName": "Copy of Deal Protection Request Form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        -256
+      ],
+      "id": "efeb67d7-e5fe-4e40-a916-f8a8b643d56a",
+      "name": "Get Prompts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zjpKaMwph2LkXKSC",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w",
+          "mode": "list",
+          "cachedResultName": "Copy of Deal Protection Request Form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 395783571,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit#gid=395783571"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Google Sheet Row Added').item.json.Timestamp }}",
+            " AI Analysis  ": "={{ $('Gemini Critic').item.json.content.parts[0].text }}",
+            "  Review Status ": "Pending Review",
+            "row_number": "=",
+            " Case ID": "={{ $('Prepare Case Data').item.json.caseId }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name ",
+              "displayName": "Full Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Email ",
+              "displayName": "Business Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Buyer Country  ",
+              "displayName": "  Buyer Country  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Letter of Credit Value ",
+              "displayName": "Letter of Credit Value ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Brief Description of Goods  ",
+              "displayName": "  Brief Description of Goods  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Upload LC PDF  ",
+              "displayName": "  Upload LC PDF  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " AI Analysis  ",
+              "displayName": " AI Analysis  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Review Status ",
+              "displayName": "  Review Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Case ID",
+              "displayName": " Case ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2080,
+        -256
+      ],
+      "id": "4acccc49-01f9-4af5-9397-c125a4ab7b0f",
+      "name": "Pending Review",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zjpKaMwph2LkXKSC",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -256
+      ],
+      "id": "2933e3c7-6794-4722-ab13-f65b7a2642bc",
+      "name": "Future RAG Retrieval Placeholder ",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w",
+          "mode": "list",
+          "cachedResultName": "Copy of Deal Protection Request Form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 395783571,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iyOcd1TwC9dK_7NlwO-i6C3FzH_ZMiiyiaFRBZcUp7w/edit#gid=395783571"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        288,
+        352
+      ],
+      "id": "1c729d72-7869-4088-ae34-3e000d11a6cb",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "PejTdgQtQcLuvNlW",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "{{company}}",
+              "replaceText": "={{ $('Google Sheets Trigger').item.json.Company }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{submitter}}",
+              "replaceText": "={{ $('Google Sheets Trigger').item.json['Full Name '] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{country}}",
+              "replaceText": "={{ $('Google Sheets Trigger').item.json['  Buyer Country  '] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{value}}",
+              "replaceText": "={{ String($('Google Sheets Trigger').item.json['Letter of Credit Value ']) }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": " {{TRACE_ID}}",
+              "replaceText": "={{ $('Google Sheets Trigger').item.json[' Case ID'] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DELIVERY_DATE}}",
+              "replaceText": "={{ $('Update a row1').item.json.review_date }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{REVIEWER_NAME}}",
+              "replaceText": "={{ $('Google Sheets Trigger').item.json['Reviewer Name '] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{analysis}}",
+              "replaceText": "={{ $('Code in JavaScript').item.json.formattedText }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        336
+      ],
+      "id": "3214c8e7-0800-4ccd-b056-3ba16a2399f6",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "rf6TbyLLLagSKJP8",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "var inputData = $input.first().json;\n\nfunction findArray(obj, possibleKeys) {\n  if (obj && typeof obj === 'object') {\n    for (var i = 0; i < possibleKeys.length; i++) {\n      if (obj[possibleKeys[i]] && Array.isArray(obj[possibleKeys[i]])) {\n        return obj[possibleKeys[i]];\n      }\n    }\n    for (var k in obj) {\n      if (typeof obj[k] === 'object') {\n        var res = findArray(obj[k], possibleKeys);\n        if (res) return res;\n      }\n    }\n  }\n  return null;\n}\n\nfunction findSummary(obj) {\n  if (obj && obj.summary) return obj.summary;\n  if (obj && obj.Summary) return obj.Summary;\n  if (obj && typeof obj === 'object') {\n    for (var k in obj) {\n      if (typeof obj[k] === 'object') {\n        var res = findSummary(obj[k]);\n        if (res) return res;\n      }\n    }\n  }\n  return null;\n}\n\nvar parsedData = {};\n\n// \u0422\u044a\u0440\u0441\u0438\u043c \u043d\u0430\u0432\u0441\u044f\u043a\u044a\u0434\u0435 \u0437\u0430 \u0442\u0435\u043a\u0441\u0442, \u043a\u043e\u0439\u0442\u043e \u043f\u0440\u0438\u043b\u0438\u0447\u0430 \u043d\u0430 JSON\nfor (var key in inputData) {\n  var rawText = inputData[key];\n  if (typeof rawText === 'string' && (rawText.includes('red_flags') || rawText.includes('redFlags'))) {\n    rawText = rawText.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();\n    try { \n      parsedData = JSON.parse(rawText); \n      break; \n    } catch (e) {}\n  } else if (typeof rawText === 'object' && rawText !== null) {\n    if (rawText['red_flags'] || rawText['redFlags']) {\n      parsedData = rawText;\n      break;\n    }\n  }\n}\n\nvar redFlagsArray = findArray(parsedData, ['red_flags', 'redFlags']) || findArray(inputData, ['red_flags', 'redFlags']) || [];\nvar watchItemsArray = findArray(parsedData, ['watch_items', 'watchItems']) || findArray(inputData, ['watch_items', 'watchItems']) || [];\nvar summaryObj = findSummary(parsedData) || findSummary(inputData);\n\nvar allIssues = redFlagsArray.concat(watchItemsArray);\nvar outputVars = {};\n\n// 1. \u0413\u0415\u041d\u0415\u0420\u0418\u0420\u0410\u041d\u0415 \u041d\u0410 \u041f\u042a\u041b\u041d\u0410 HTML \u0422\u0410\u0411\u041b\u0418\u0426\u0410 \u0417\u0410 \u0418\u041c\u0415\u0419\u041b\u0410\nvar htmlTable = \"<table border=\\\"1\\\" cellpadding=\\\"8\\\" style=\\\"border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;\\\">\";\nhtmlTable += \"<tr style=\\\"background-color:#f2f2f2; text-align: left;\\\"><th>#</th><th>LC Field / Clause</th><th>Trap Type</th><th>Rating</th><th>Max Exposure</th><th>Plain-language meaning</th></tr>\";\n\nfor (var k = 0; k < allIssues.length; k++) {\n  var emIssue = allIssues[k];\n  var emRating = emIssue.rating || emIssue.Rating || (k < redFlagsArray.length ? \"RED FLAG\" : \"WATCH\");\n  var emColor = (emRating.toUpperCase().indexOf(\"RED\") !== -1) ? \"red\" : \"#f0ad4e\";\n  var emDesc = (emIssue.why_it_hurts || emIssue.whyItHurts || \"\") + \"<br><br><b>Revised wording:</b><br>\" + (emIssue.revised_wording || emIssue.revisedWording || \"\");\n  \n  htmlTable += \"<tr>\";\n  htmlTable += \"<td>\" + (k + 1) + \"</td>\";\n  htmlTable += \"<td><b>\" + (emIssue.clause || emIssue.Clause || \"\") + \"</b></td>\";\n  htmlTable += \"<td>\" + (emIssue.trap_type || emIssue.trapType || \"\") + \"</td>\";\n  htmlTable += \"<td style=\\\"color:\" + emColor + \"; font-weight:bold;\\\">\" + emRating + \"</td>\";\n  htmlTable += \"<td><b>\" + (emIssue.exposure || emIssue.Exposure || \"\") + \"</b></td>\";\n  htmlTable += \"<td>\" + emDesc + \"</td>\";\n  htmlTable += \"</tr>\";\n}\nhtmlTable += \"</table>\";\n\nif (summaryObj) {\n  var rC = summaryObj.red_flags_count || summaryObj.redFlagsCount || 0;\n  var wC = summaryObj.watch_items_count || summaryObj.watchItemsCount || 0;\n  var tE = summaryObj.total_exposure || summaryObj.totalExposure || \"\";\n  \n  htmlTable += \"<br><div style=\\\"font-family: Arial, sans-serif;\\\">\";\n  htmlTable += \"<p><b>Red Flags: \" + rC + \"</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Watch: \" + wC + \"</b><br>\";\n  htmlTable += rC + \" fatal traps, \" + wC + \" warning signals</p>\";\n  htmlTable += \"<p><b>Worst-case exposure</b><br><span style=\\\"font-size:18px; color:red;\\\">\" + tE + \"</span></p>\";\n  htmlTable += \"</div>\";\n}\noutputVars[\"htmlTable\"] = htmlTable;\n\n// 2. \u0418\u0417\u0427\u0418\u0421\u0422\u0415\u041d \u0414\u0418\u0417\u0410\u0419\u041d \u0417\u0410 GOOGLE DOCS (PDF-\u0430) - \u0411\u0415\u0417 \u0422\u0415\u0416\u041a\u0418 \u0421\u0418\u041c\u0412\u041e\u041b\u0418\nvar cardText = \"\\n\";\n\nfor (var i = 0; i < allIssues.length; i++) {\n  var issue = allIssues[i];\n  var rating = issue.rating || issue.Rating || (i < redFlagsArray.length ? \"RED FLAG\" : \"WATCH\");\n  var ratingClean = rating.toUpperCase().indexOf(\"RED\") !== -1 ? \"\ud83d\udd34 RED FLAG\" : \"\ud83d\udfe1 WATCH\";\n  \n  cardText += \"ISSUE #\" + (i + 1) + \": \" + (issue.clause || issue.Clause || \"\") + \"\\n\";\n  cardText += \"--------------------------------------------------\\n\";\n  cardText += \"Type:       \" + (issue.trap_type || issue.trapType || \"\") + \"\\n\";\n  cardText += \"Rating:     \" + ratingClean + \"\\n\";\n  cardText += \"Exposure:   \" + (issue.exposure || issue.Exposure || \"\") + \"\\n\\n\";\n  cardText += \"Plain-language meaning:\\n\" + (issue.why_it_hurts || issue.whyItHurts || \"\") + \"\\n\\n\";\n  cardText += \"Revised wording:\\n\" + (issue.revised_wording || issue.revisedWording || \"\") + \"\\n\\n\";\n  cardText += \"--------------------------------------------------\\n\\n\\n\";\n}\n\nif (summaryObj) {\n  var rCount = summaryObj.red_flags_count || summaryObj.redFlagsCount || 0;\n  var wCount = summaryObj.watch_items_count || summaryObj.watchItemsCount || 0;\n  var tExp = summaryObj.total_exposure || summaryObj.totalExposure || \"\";\n  \n  cardText += \"REPORT SUMMARY\\n\";\n  cardText += \"--------------------------------------------------\\n\";\n  cardText += \"Red Flags: \" + rCount + \"        Watch Items: \" + wCount + \"\\n\";\n  cardText += rCount + \" fatal traps, \" + wCount + \" warning signals\\n\\n\";\n  cardText += \"Worst-case exposure:\\n\";\n  cardText += tExp + \"\\n\";\n}\n\noutputVars[\"formattedText\"] = cardText;\n\nreturn [{ json: outputVars }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        336
+      ],
+      "id": "cc0291fe-c308-482e-b611-2429a6191ea6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "alexassenov@gmail.com",
+        "subject": "Your Letter of Credit Analysis is Ready!",
+        "message": "=  <p>Dear <b>{{ $('Google Sheets Trigger').item.json['Full Name '] }}</b>,</p>\n\n    <p>Your Letter of Credit (LC) analysis has been successfully completed by our Trade Finance AI and\n  approved by our expert review team.</p>\n\n    <p>Attached to this email, you will find your official <b>Deal Protection Report (PDF)</b> containing\n  detailed explanations and suggested revised wordings.</p>\n\n    <p>For your convenience, a quick summary of the critical findings is attached below</p>\n\n    <p>If you have any questions or require further assistance in negotiating these clauses with the\n  issuing bank, please do not hesitate to contact us.</p>\n\n    <p>Best regards,<br>\n    <b>The Trade Finance Team</b></p>\n ",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        336
+      ],
+      "id": "5b6cd3b5-fee2-4c23-a00c-ff85e5231b28",
+      "name": "Send a message",
+      "webhookId": "9e920aa0-cdcc-40f3-b4c3-8d7c33001218",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gtOzON1K35jQ6Llf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.documentId }}/export?mimeType=application/pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1744,
+        336
+      ],
+      "id": "120c8128-174f-4952-83a8-f3cfb658e3a6",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "5HyraZ8D82n9nRfa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "95b493f7-95ae-48e4-9232-42372486b1e6",
+              "leftValue": "={{ $('Google Sheets Trigger').item.json['  Review Status '] }}",
+              "rightValue": "Approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        352
+      ],
+      "id": "83ba4bc7-920c-44bb-9dc7-9cbdd8df2769",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1Li1FqAu6j9ScvKRzRcSNEUn6XLa5ni128lJAv_LGuFw",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        336
+      ],
+      "id": "17e8d0b9-2358-4bc0-8068-648f7de34554",
+      "name": "Copy file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "5HyraZ8D82n9nRfa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "clause_reports",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "trace_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Google Sheets Trigger').item.json[' Case ID'] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "Completed"
+            },
+            {
+              "fieldId": "reviewer_comments",
+              "fieldValue": "={{ $('Google Sheets Trigger').item.json[' Reviewer Comments '] }}"
+            },
+            {
+              "fieldId": "review_date",
+              "fieldValue": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}"
+            },
+            {
+              "fieldId": "review_decision",
+              "fieldValue": "={{ $('Google Sheets Trigger').item.json['  Review Status '] }}"
+            },
+            {
+              "fieldId": "reviewer_name",
+              "fieldValue": "={{ $json['Reviewer Name '] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        576,
+        352
+      ],
+      "id": "5640aea1-434a-47cd-a402-28e3639ea971",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QWIKYuwLXNJa6qqT",
+          "name": "Supabase account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Step 6: Send Email\n\nThe final PDF report is attached to an email along with the summary table and sent\ndirectly.\n",
+        "height": 368,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        160
+      ],
+      "id": "e810fddf-5923-41c3-b619-a8e67c705a30",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "Step 5: Save & Wait\n\nThe final results are securely saved to the Database and sent to a Google Sheet where they wait for a human manager to review them.\n \n\n",
+        "height": 336,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        -416
+      ],
+      "id": "aedcd172-0f3e-4ada-ad99-16ab229e81aa",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Step 4: AI Critic\n\nThe second AI agent double-checks the first AI's work to make absolutely sure nothing was missed or incorrectly flagged.\n",
+        "height": 336,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        -416
+      ],
+      "id": "1ea94414-5550-434f-b897-47be75fc952f",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Step 3: AI Analyst\n\nThe first AI agent reads the complex text and finds all the hidden traps, financial risks, and errors.\n",
+        "height": 336,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -416
+      ],
+      "id": "4c701beb-b3de-4cdb-9b95-bdaa64f8bab2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Step 5: Create Document & PDF\n\nThe system pastes the organized data into an official Google Docs template and\nconverts it into a perfect, ready-to-print PDF file.\n",
+        "height": 368,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        160
+      ],
+      "id": "b00bd558-5591-44b4-965d-cce5a4c23915",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "Step 3: Check Decision\n\nThe system checks the manager's decision. If \"Rejected\" the process stops to prevent sending a bad report. If \"Approved\", it continues and a custom script organizes the AI's raw findings into clean, readable pdf summary.\n",
+        "height": 368,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        816,
+        160
+      ],
+      "id": "e45e681b-eee8-425b-ac43-537b19dfaafd",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "Step 2: Sync to Database\n\nThe manager's name, comments, and final decision (Approved/Rejected) are\nimmediately saved to the Database so the AI can learn from them in the future.",
+        "height": 368,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        448,
+        160
+      ],
+      "id": "af26f84e-9c76-4ea2-b2e4-123cb17cc87a",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "Steip 3: Read Document & Save\n\nThe system downloads the uploaded PDF from Google Drive, extracts all the raw text, and saves a new \"Pending\" record in the Database \n\n\n",
+        "height": 336,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -416
+      ],
+      "id": "fbd201c5-04be-4794-9eeb-d7a0afdd9fb1",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": " Step 2: Read Document\n\n\u0422he system downloads the uploaded PDF from Google Drive, extracts all the text, and assigns a unique Case ID.\n",
+        "height": 320,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        48,
+        -400
+      ],
+      "id": "f1434481-a720-48dd-ba45-8869dad39316",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Step 1: Human Review Trigger\n\nThe process wakes up instantly when a human manager updates a row in the Google\nSheet (e.g., adding comments or changing the status).\n \n ",
+        "height": 368,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        48,
+        160
+      ],
+      "id": "c84724ab-67d7-4975-902a-7ee8a275d9b9",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "Step 1: Intake Form\n\nThe process starts automatically when a new request is submitted via a web form and saved into a Google Sheet.\n\n\n",
+        "height": 320,
+        "width": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -400
+      ],
+      "id": "3f1b2d28-8200-4b2e-8d42-47ef9af127b7",
+      "name": "Sticky Note4"
+    }
+  ],
+  "connections": {
+    "Google Sheet Row Added": {
+      "main": [
+        [
+          {
+            "node": "Prepare Case Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Case Data": {
+      "main": [
+        [
+          {
+            "node": "Download PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Future RAG Retrieval Placeholder ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Supabase Report": {
+      "main": [
+        [
+          {
+            "node": "Get Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Analyst": {
+      "main": [
+        [
+          {
+            "node": "Gemini Critic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Critic": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Pending Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Prompts": {
+      "main": [
+        [
+          {
+            "node": "Gemini Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Future RAG Retrieval Placeholder ": {
+      "main": [
+        [
+          {
+            "node": "Create Supabase Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Copy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null
+}

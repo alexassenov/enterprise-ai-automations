@@ -13,6 +13,7 @@ Production-ready, enterprise-grade AI automations, autonomous agent systems, pro
 
 ### 1. [Trade-War Geopolitical Risk Alerter](./01-trade-war-risk-alerter/)
 * **Category:** Autonomous Multi-Agent Intelligence & Real-Time Alerting
+* **Client Engagement:** Enterprise Client Case Study (Global Trade Risk Intelligence & WhatsApp Alerting)
 * **Tech Stack:** `n8n`, `Perplexity API`, `OpenAI / Gemini`, `Supabase`, `Google Sheets`, `Picky Assist (WhatsApp Business)`
 * **Architecture:** Dual-Agent Architecture (**Analyst Agent** + **Critic Agent** for fact-checking and hallucination elimination). Continuously monitors trade and export restrictions across five critical global trade corridors (LATAM, CIS, Africa, MENA, EU) and delivers real-time priority alerts to executive teams.
 
@@ -41,7 +42,7 @@ Production-ready, enterprise-grade AI automations, autonomous agent systems, pro
 
 ### 5. [Web Landing Page & Automated AI SEO Blog Engine (Dr. V Meditation)](./05-ai-seo-blog-engine-drvmeditation/)
 * **Category:** SEO Growth Engine, Content Marketing Automation, Health & Wellness
-* **Client Engagement:** Direct Fiverr Client Case Study (Mobile App on iOS/Android & Book Funnel)
+* **Client Engagement:** Production Client Case Study (Mobile App on iOS/Android & Book Funnel)
 * **Tech Stack:** `n8n`, `OpenAI / Gemini`, `Tailwind CSS`, `Nginx`, `Cloudflare CDN & SSL`, [Live Domain](https://drvmeditation.com)
 * **Architecture:** Multi-milestone cloud deployment driving organic Google search traffic and app store downloads for the *Dr. V Healing* mobile app and *The Three Pillars* book. Pairs a fast, high-converting responsive landing page with an automated n8n pipeline producing long-form wellness articles with dynamic CTAs and schema markup. Engineered for a predictable ~$60-$80/mo multi-year operating budget with $0 paid ad spend.
 
@@ -52,6 +53,20 @@ Production-ready, enterprise-grade AI automations, autonomous agent systems, pro
 * **Client Engagement:** Swiss Web Agency Client Case Study (Joschua R. / Zurich Google Ads Advertisers)
 * **Tech Stack:** `Python 3.12`, `Playwright Headless Engine`, `Claude 3.5 Sonnet Vision`, `Google PageSpeed Insights (Lighthouse) API`, `PHP 8.3`, `Tailwind CSS`, [Live Review Portal](https://joschua.lexmation.com)
 * **Architecture:** Automated lead generation and visual audit pipeline targeting businesses actively running paid Google Ads in Zurich. Captures pixel-perfect full-page mobile (390px) and desktop screenshots, computes real 4G Core Web Vitals (LCP, FCP, Speed Index, TBT) via official Google Lighthouse APIs, and applies Claude 3.5 Sonnet Vision to evaluate design aesthetics (1–10 rating), visual bugs, and conversion obstacles. Delivers tailored Swiss-German outreach pitches into a private interactive client review portal with 1-click CSV export.
+
+---
+
+### 7. [Enterprise Letter of Credit (LC) Deal Protection & HITL Dual-Agent Pipeline](./07-enterprise-lc-deal-protection-hitl/)
+* **Category:** Trade Finance Risk Auditing, Dual-Agent Reasoning, Human-in-the-Loop (HITL) Governance
+* **Tech Stack:** `n8n (30 Nodes)`, `Gemini 3.1 Pro Preview`, `Gemini 2.5 Flash`, `Supabase`, `Google Workspace` (Sheets, Drive, Docs, Gmail)
+* **Architecture:** End-to-end autonomous contract and Letter of Credit verification engine. Integrates web intake forms, automated PDF extraction, dynamic prompt loading, and a Dual-Agent (Analyst + Critic) verification architecture to eliminate hallucinations and flag high-risk transaction liabilities. Features a strict Human-in-the-Loop review queue, automated Google Docs report templating, PDF generation, and automated stakeholder dispatch.
+
+---
+
+### 8. [Autonomous AI Inbound Lead Enrichment & Follow-Up Engine](./08-ai-lead-enrichment-crm-engine/)
+* **Category:** Inbound SDR Automation, Live Web Scraping, Multi-Channel Ops & Follow-Up Engine
+* **Tech Stack:** `n8n (26 Nodes)`, `LangChain AI Agent`, `OpenAI GPT-4o`, `Gmail API`, `Slack API`, `Telegram Bot API`, `Google Sheets CRM`
+* **Architecture:** Autonomous inbound lead qualification pipeline. Triggers from webhooks, crawls the prospect's live website in real-time to extract company offerings, and uses a LangChain AI agent to draft hyper-personalized proposals addressing their exact bottleneck. Dispatches simultaneous alerts to Slack, Telegram, and executive email, with an autonomous 72-hour execution pause that checks thread reply state before firing an automated follow-up.
 
 ---
 

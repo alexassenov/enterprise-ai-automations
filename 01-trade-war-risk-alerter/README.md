@@ -1,17 +1,17 @@
 # Trade-War News Alerter — Step-by-Step Configuration & Operations Guide
-*Enterprise Configuration, Architecture & Operations Manual • Fiverr Production Release*
+*Enterprise Configuration, Architecture & Operations Manual • Enterprise Production Release*
 
-> **Workflow Name:** Trade-War Fiverr version  
+> **Workflow Name:** Trade-War Geopolitical Risk Alerter  
 > **Workflow ID:** `LDB4NhGmcXsOUdn8`  
 > **Platform:** n8n (v1.x+)  
 > **Integration Ecosystem:** Google Sheets, Perplexity API, OpenAI / Gemini, Supabase, Picky Assist (WhatsApp Business)  
-> **Architecture & Delivery:** Lexmation ([lexmation.com](https://lexmation.com))  
+> **Architecture & Engineering:** Alex Assenov  
 
 ---
 
 ## 1. Executive Summary & Architecture
 
-The **Trade-War News Alerter** (Fiverr Production Edition) is an autonomous multi-agent AI system designed to monitor, validate, and dispatch real-time geopolitical and export risk intelligence for Indian businesses across five strategic corridors:
+The **Trade-War News Alerter** is an autonomous multi-agent AI system designed to monitor, validate, and dispatch real-time geopolitical and export risk intelligence for businesses across five strategic corridors:
 - **LATAM** (Latin America)
 - **CIS** (Commonwealth of Independent States)
 - **Africa**
@@ -82,7 +82,7 @@ Ensure the following accounts and credentials are configured in your n8n workspa
 
 1. In n8n, navigate to **Workflows** ➔ Click **Add Workflow (+)**.
 2. Click the top-right **three dots menu (`...`)** ➔ Select **Import from File**.
-3. Select `trade_war_fiverr_version.json` (Workflow ID: `LDB4NhGmcXsOUdn8`).
+3. Select `workflow.json` (Workflow ID: `LDB4NhGmcXsOUdn8`).
 4. **Timezone Setting (MANDATORY):**
    - Click the **Workflow Settings** (gear icon) in the canvas top bar.
    - Set **Timezone** to `Asia/Kolkata (IST)`.
@@ -192,44 +192,17 @@ The production workflow uses the pre-approved WhatsApp template: `trade_alert_no
 
 ---
 
-## 9. 14-Day Complimentary Support & Warranty
+## 9. Operations & Verification Checklist
 
-> **2-WEEK POST-DEPLOYMENT HYPERCARE INCLUDED**  
-> Your project includes **14 days (2 full weeks) of complimentary technical support** starting from delivery.  
-> 
-> **What is covered:**
-> - Assistance with credential linking (Google OAuth2, Picky Assist, Perplexity, Supabase).
-> - Bug fixes, expression calibration, and prompt fine-tuning.
-> - Verification of live cron executions and WhatsApp alert delivery.
-> 
-> If you encounter any questions or need adjustments, simply send a message on Fiverr and our engineering team will assist you promptly.
+1. **Credentials Verification:** Ensure Google OAuth2, Picky Assist (WhatsApp), Perplexity API, and Supabase credentials are authenticated and valid.
+2. **Cron Schedule:** Default cron is scheduled for daily automated execution.
+3. **Traceability:** Diagnostic traces are logged in Supabase (`risk_logs`) and Google Sheets (`Risk Log`).
+4. **WhatsApp Alerting:** When risk severity threshold is met (Level 4+), priority alerts are dispatched directly to designated subscriber numbers.
 
 ---
 
-## 10. About Lexmation — AI SaaS & Automation Agency
+## 10. Included Documentation Assets
 
-This enterprise automation was architected and deployed by **Lexmation**, an AI SaaS & Digital Engineering Agency specializing in autonomous multi-agent workflows, custom AI integrations, and cloud infrastructure.
-
-| Service Line | Capabilities & Technologies | Business Impact |
-| :--- | :--- | :--- |
-| **Autonomous AI Agents** | Multi-agent LangChain systems, LangGraph, custom tool-use bots | Automate high-complexity decision making |
-| **n8n Enterprise Automation** | Custom API integrations, resilient webhook pipelines, ETL | Eliminate manual data entry and save hours daily |
-| **Custom AI Chatbots & RAG** | Knowledge-base vector search (pgvector, Pinecone), WhatsApp/CRM | 24/7 intelligent customer engagement & lead triage |
-| **Cloud & Data Infrastructure** | Supabase, PostgreSQL, Docker, Secure Linux Web Servers | Enterprise reliability, zero vendor lock-in, data sovereignty |
-
-Explore our solutions and case studies at: **[https://lexmation.com](https://lexmation.com)**
-
----
-
-## 11. Client Satisfaction & Fiverr Feedback
-
-> **A QUICK REQUEST FROM YOUR AUTOMATION ENGINEER**  
-> Dear Client,  
-> 
-> It was a pleasure engineering the **Trade-War News Alerter** for your business! Our goal is always to deliver 5-star, enterprise-grade automations that give you a definitive market edge.  
-> 
-> If you are satisfied with the speed, technical quality, and documentation of this delivery, **please take 60 seconds to leave a 5-Star Review and positive feedback on Fiverr**.  
-> 
-> Your review means the world to our agency, helps other businesses discover our AI automation services, and motivates us to keep providing top-tier post-delivery support.  
-> 
-> Thank you for your trust and partnership! We look forward to building your next AI workflow.
+* **Master Configuration Guide:** [`Trade_War_News_Alerter_Configuration_Guide.pdf`](./Trade_War_News_Alerter_Configuration_Guide.pdf)
+* **Technical Scope & Requirements:** [`Trade-War_Alerter_Requirement_Document.docx`](./Trade-War_Alerter_Requirement_Document.docx)
+* **Workflow Source Definition:** [`workflow.json`](./workflow.json)
